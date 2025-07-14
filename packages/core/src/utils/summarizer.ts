@@ -10,8 +10,8 @@ import {
   GenerateContentConfig,
   GenerateContentResponse,
 } from '@google/genai';
-import { GeminiClient } from '../core/client.js';
-import { DEFAULT_GEMINI_FLASH_MODEL } from '../config/models.js';
+import { GrokClient } from '../core/client.js';
+import { DEFAULT_GROK_FLASH_MODEL } from '../config/models.js';
 import { PartListUnion } from '@google/genai';
 
 /**
@@ -22,7 +22,7 @@ import { PartListUnion } from '@google/genai';
  */
 export type Summarizer = (
   result: ToolResult,
-  geminiClient: GeminiClient,
+  grokClient: GrokClient,
   abortSignal: AbortSignal,
 ) => Promise<string>;
 
@@ -30,13 +30,13 @@ export type Summarizer = (
  * The default summarizer for tool results.
  *
  * @param result The result of the tool execution.
- * @param geminiClient The Gemini client to use for summarization.
+ * @param grokClient The Gemini client to use for summarization.
  * @param abortSignal The abort signal to use for summarization.
  * @returns The summary of the result.
  */
 export const defaultSummarizer: Summarizer = (
   result: ToolResult,
-  _geminiClient: GeminiClient,
+  _grokClient: GrokClient,
   _abortSignal: AbortSignal,
 ) => Promise.resolve(JSON.stringify(result.llmContent));
 
@@ -74,7 +74,7 @@ function getResponseText(response: GenerateContentResponse): string | null {
   return null;
 }
 
-const toolOutputSummarizerModel = DEFAULT_GEMINI_FLASH_MODEL;
+const toolOutputSummarizerModel = DEFAULT_GROK_FLASH_MODEL;
 const toolOutputSummarizerConfig: GenerateContentConfig = {
   maxOutputTokens: 2000,
 };
@@ -93,16 +93,16 @@ Text to summarize:
 Return the summary string which should first contain an overall summarization of text followed by the full stack trace of errors and warnings in the tool output.
 `;
 
-export const llmSummarizer: Summarizer = (result, geminiClient, abortSignal) =>
+export const llmSummarizer: Summarizer = (result, grokClient, abortSignal) =>
   summarizeToolOutput(
     partToString(result.llmContent),
-    geminiClient,
+    grokClient,
     abortSignal,
   );
 
 export async function summarizeToolOutput(
   textToSummarize: string,
-  geminiClient: GeminiClient,
+  grokClient: GrokClient,
   abortSignal: AbortSignal,
   maxLength: number = 2000,
 ): Promise<string> {
@@ -117,7 +117,7 @@ export async function summarizeToolOutput(
   const contents: Content[] = [{ role: 'user', parts: [{ text: prompt }] }];
 
   try {
-    const parsedResponse = (await geminiClient.generateContent(
+    const parsedResponse = (await grokClient.generateContent(
       contents,
       toolOutputSummarizerConfig,
       abortSignal,

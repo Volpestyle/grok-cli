@@ -24,11 +24,11 @@ import { WebFetchTool } from '../tools/web-fetch.js';
 import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import {
   MemoryTool,
-  setGeminiMdFilename,
-  GEMINI_CONFIG_DIR as GEMINI_DIR,
+  setGrokMdFilename,
+  GROK_CONFIG_DIR as GROK_DIR,
 } from '../tools/memoryTool.js';
 import { WebSearchTool } from '../tools/web-search.js';
-import { GeminiClient } from '../core/client.js';
+import { GrokClient } from '../core/client.js';
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { GitService } from '../services/gitService.js';
 import { loadServerHierarchicalMemory } from '../utils/memoryDiscovery.js';
@@ -40,10 +40,7 @@ import {
   TelemetryTarget,
   StartSessionEvent,
 } from '../telemetry/index.js';
-import {
-  DEFAULT_GEMINI_EMBEDDING_MODEL,
-  DEFAULT_GEMINI_FLASH_MODEL,
-} from './models.js';
+import { DEFAULT_GROK_FLASH_MODEL } from './models.js';
 import { ClearcutLogger } from '../telemetry/clearcut-logger/clearcut-logger.js';
 
 export enum ApprovalMode {
@@ -122,7 +119,7 @@ export interface ConfigParameters {
   mcpServerCommand?: string;
   mcpServers?: Record<string, MCPServerConfig>;
   userMemory?: string;
-  geminiMdFileCount?: number;
+  grokMdFileCount?: number;
   approvalMode?: ApprovalMode;
   showMemoryUsage?: boolean;
   contextFileName?: string | string[];
@@ -163,13 +160,13 @@ export class Config {
   private readonly mcpServerCommand: string | undefined;
   private readonly mcpServers: Record<string, MCPServerConfig> | undefined;
   private userMemory: string;
-  private geminiMdFileCount: number;
+  private grokMdFileCount: number;
   private approvalMode: ApprovalMode;
   private readonly showMemoryUsage: boolean;
   private readonly accessibility: AccessibilitySettings;
   private readonly telemetrySettings: TelemetrySettings;
   private readonly usageStatisticsEnabled: boolean;
-  private geminiClient!: GeminiClient;
+  private grokClient!: GrokClient;
   private readonly fileFiltering: {
     respectGitIgnore: boolean;
     enableRecursiveFileSearch: boolean;
@@ -192,8 +189,7 @@ export class Config {
 
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId;
-    this.embeddingModel =
-      params.embeddingModel ?? DEFAULT_GEMINI_EMBEDDING_MODEL;
+    this.embeddingModel = params.embeddingModel ?? '';
     this.sandbox = params.sandbox;
     this.targetDir = path.resolve(params.targetDir);
     this.debugMode = params.debugMode;
@@ -206,7 +202,7 @@ export class Config {
     this.mcpServerCommand = params.mcpServerCommand;
     this.mcpServers = params.mcpServers;
     this.userMemory = params.userMemory ?? '';
-    this.geminiMdFileCount = params.geminiMdFileCount ?? 0;
+    this.grokMdFileCount = params.grokMdFileCount ?? 0;
     this.approvalMode = params.approvalMode ?? ApprovalMode.DEFAULT;
     this.showMemoryUsage = params.showMemoryUsage ?? false;
     this.accessibility = params.accessibility ?? {};
@@ -236,7 +232,7 @@ export class Config {
     this.noBrowser = params.noBrowser ?? false;
 
     if (params.contextFileName) {
-      setGeminiMdFilename(params.contextFileName);
+      setGrokMdFilename(params.contextFileName);
     }
 
     if (this.telemetrySettings.enabled) {
@@ -271,8 +267,8 @@ export class Config {
       authMethod,
     );
 
-    this.geminiClient = new GeminiClient(this);
-    await this.geminiClient.initialize(this.contentGeneratorConfig);
+    this.grokClient = new GrokClient(this);
+    await this.grokClient.initialize(this.contentGeneratorConfig);
 
     // Reset the session flag since we're explicitly changing auth and using default model
     this.modelSwitchedDuringSession = false;
@@ -325,10 +321,10 @@ export class Config {
   }
 
   async getUserTier(): Promise<UserTierId | undefined> {
-    if (!this.geminiClient) {
+    if (!this.grokClient) {
       return undefined;
     }
-    const generator = this.geminiClient.getContentGenerator();
+    const generator = this.grokClient.getContentGenerator();
     return await generator.getTier?.();
   }
 
@@ -395,12 +391,12 @@ export class Config {
     this.userMemory = newUserMemory;
   }
 
-  getGeminiMdFileCount(): number {
-    return this.geminiMdFileCount;
+  getGrokMdFileCount(): number {
+    return this.grokMdFileCount;
   }
 
-  setGeminiMdFileCount(count: number): void {
-    this.geminiMdFileCount = count;
+  setGrokMdFileCount(count: number): void {
+    this.grokMdFileCount = count;
   }
 
   getApprovalMode(): ApprovalMode {
@@ -435,12 +431,12 @@ export class Config {
     return this.telemetrySettings.target ?? DEFAULT_TELEMETRY_TARGET;
   }
 
-  getGeminiClient(): GeminiClient {
-    return this.geminiClient;
+  getGrokClient(): GrokClient {
+    return this.grokClient;
   }
 
-  getGeminiDir(): string {
-    return path.join(this.targetDir, GEMINI_DIR);
+  getGrokDir(): string {
+    return path.join(this.targetDir, GROK_DIR);
   }
 
   getProjectTempDir(): string {
@@ -515,7 +511,7 @@ export class Config {
     );
 
     this.setUserMemory(memoryContent);
-    this.setGeminiMdFileCount(fileCount);
+    this.setGrokMdFileCount(fileCount);
 
     return { memoryContent, fileCount };
   }
@@ -574,4 +570,4 @@ export class Config {
   }
 }
 // Export model constants for use in CLI
-export { DEFAULT_GEMINI_FLASH_MODEL };
+export { DEFAULT_GROK_FLASH_MODEL };

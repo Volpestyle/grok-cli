@@ -53,9 +53,11 @@ export class StartSessionEvent {
     const generatorConfig = config.getContentGeneratorConfig();
     const mcpServers = config.getMcpServers();
 
+    let useGrok = false;
     let useGemini = false;
     let useVertex = false;
     if (generatorConfig && generatorConfig.authType) {
+      useGrok = generatorConfig.authType === AuthType.USE_GROK;
       useGemini = generatorConfig.authType === AuthType.USE_GEMINI;
       useVertex = generatorConfig.authType === AuthType.USE_VERTEX_AI;
     }
@@ -67,7 +69,7 @@ export class StartSessionEvent {
       typeof config.getSandbox() === 'string' || !!config.getSandbox();
     this.core_tools_enabled = (config.getCoreTools() ?? []).join(',');
     this.approval_mode = config.getApprovalMode();
-    this.api_key_enabled = useGemini || useVertex;
+    this.api_key_enabled = useGrok || useGemini || useVertex;
     this.vertex_ai_enabled = useVertex;
     this.debug_enabled = config.getDebugMode();
     this.mcp_servers = mcpServers ? Object.keys(mcpServers).join(',') : '';

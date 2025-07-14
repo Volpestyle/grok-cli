@@ -30,7 +30,7 @@ vi.mock('fs', () => ({
 }));
 
 vi.mock('../core/client.js', () => ({
-  GeminiClient: vi.fn().mockImplementation(function (
+  GrokClient: vi.fn().mockImplementation(function (
     this: any,
     _config: Config,
   ) {
@@ -50,7 +50,7 @@ import {
   unescapeStringForGeminiBug,
   resetEditCorrectorCaches_TEST_ONLY,
 } from './editCorrector.js';
-import { GeminiClient } from '../core/client.js';
+import { GrokClient } from '../core/client.js';
 import type { Config } from '../config/config.js';
 import { ToolRegistry } from '../tools/tool-registry.js';
 
@@ -159,7 +159,7 @@ describe('editCorrector', () => {
   });
 
   describe('ensureCorrectEdit', () => {
-    let mockGeminiClientInstance: Mocked<GeminiClient>;
+    let mockGrokClientInstance: Mocked<GrokClient>;
     let mockToolRegistry: Mocked<ToolRegistry>;
     let mockConfigInstance: Config;
     const abortSignal = new AbortController().signal;
@@ -181,7 +181,7 @@ describe('editCorrector', () => {
         mcpServers: undefined as Record<string, any> | undefined,
         userAgent: 'test-agent',
         userMemory: '',
-        geminiMdFileCount: 0,
+        grokMdFileCount: 0,
         alwaysSkipModificationConfirmation: false,
       };
       mockConfigInstance = {
@@ -204,9 +204,9 @@ describe('editCorrector', () => {
         setUserMemory: vi.fn((mem: string) => {
           configParams.userMemory = mem;
         }),
-        getGeminiMdFileCount: vi.fn(() => configParams.geminiMdFileCount),
-        setGeminiMdFileCount: vi.fn((count: number) => {
-          configParams.geminiMdFileCount = count;
+        getGrokMdFileCount: vi.fn(() => configParams.grokMdFileCount),
+        setGrokMdFileCount: vi.fn((count: number) => {
+          configParams.grokMdFileCount = count;
         }),
         getAlwaysSkipModificationConfirmation: vi.fn(
           () => configParams.alwaysSkipModificationConfirmation,
@@ -235,10 +235,10 @@ describe('editCorrector', () => {
       mockStartChat = vi.fn();
       mockSendMessageStream = vi.fn();
 
-      mockGeminiClientInstance = new GeminiClient(
+      mockGrokClientInstance = new GrokClient(
         mockConfigInstance,
-      ) as Mocked<GeminiClient>;
-      mockGeminiClientInstance.getHistory = vi.fn().mockResolvedValue([]);
+      ) as Mocked<GrokClient>;
+      mockGrokClientInstance.getHistory = vi.fn().mockResolvedValue([]);
       resetEditCorrectorCaches_TEST_ONLY();
     });
 
@@ -257,7 +257,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(1);
@@ -276,7 +276,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(0);
@@ -298,7 +298,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(1);
@@ -317,7 +317,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(0);
@@ -340,7 +340,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(1);
@@ -359,7 +359,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(0);
@@ -378,7 +378,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(0);
@@ -402,7 +402,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(1);
@@ -425,7 +425,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(2);
@@ -446,7 +446,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(1);
@@ -469,7 +469,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(1);
@@ -491,7 +491,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(1);
@@ -510,7 +510,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(0);
@@ -534,7 +534,7 @@ describe('editCorrector', () => {
           '/test/file.txt',
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
         expect(mockGenerateJson).toHaveBeenCalledTimes(2);
@@ -582,7 +582,7 @@ describe('editCorrector', () => {
             ],
           },
         ];
-        (mockGeminiClientInstance.getHistory as Mock).mockResolvedValue(
+        (mockGrokClientInstance.getHistory as Mock).mockResolvedValue(
           history,
         );
 
@@ -590,7 +590,7 @@ describe('editCorrector', () => {
           filePath,
           currentContent,
           originalParams,
-          mockGeminiClientInstance,
+          mockGrokClientInstance,
           abortSignal,
         );
 
@@ -601,7 +601,7 @@ describe('editCorrector', () => {
   });
 
   describe('ensureCorrectFileContent', () => {
-    let mockGeminiClientInstance: Mocked<GeminiClient>;
+    let mockGrokClientInstance: Mocked<GrokClient>;
     let mockToolRegistry: Mocked<ToolRegistry>;
     let mockConfigInstance: Config;
     const abortSignal = new AbortController().signal;
@@ -623,7 +623,7 @@ describe('editCorrector', () => {
         mcpServers: undefined as Record<string, any> | undefined,
         userAgent: 'test-agent',
         userMemory: '',
-        geminiMdFileCount: 0,
+        grokMdFileCount: 0,
         alwaysSkipModificationConfirmation: false,
       };
       mockConfigInstance = {
@@ -646,9 +646,9 @@ describe('editCorrector', () => {
         setUserMemory: vi.fn((mem: string) => {
           configParams.userMemory = mem;
         }),
-        getGeminiMdFileCount: vi.fn(() => configParams.geminiMdFileCount),
-        setGeminiMdFileCount: vi.fn((count: number) => {
-          configParams.geminiMdFileCount = count;
+        getGrokMdFileCount: vi.fn(() => configParams.grokMdFileCount),
+        setGrokMdFileCount: vi.fn((count: number) => {
+          configParams.grokMdFileCount = count;
         }),
         getAlwaysSkipModificationConfirmation: vi.fn(
           () => configParams.alwaysSkipModificationConfirmation,
@@ -676,9 +676,9 @@ describe('editCorrector', () => {
       mockStartChat = vi.fn();
       mockSendMessageStream = vi.fn();
 
-      mockGeminiClientInstance = new GeminiClient(
+      mockGrokClientInstance = new GrokClient(
         mockConfigInstance,
-      ) as Mocked<GeminiClient>;
+      ) as Mocked<GrokClient>;
       resetEditCorrectorCaches_TEST_ONLY();
     });
 
@@ -686,7 +686,7 @@ describe('editCorrector', () => {
       const content = 'This is normal content without escaping issues';
       const result = await ensureCorrectFileContent(
         content,
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
       expect(result).toBe(content);
@@ -702,7 +702,7 @@ describe('editCorrector', () => {
 
       const result = await ensureCorrectFileContent(
         content,
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
 
@@ -722,7 +722,7 @@ describe('editCorrector', () => {
 
       const result = await ensureCorrectFileContent(
         content,
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
 
@@ -737,7 +737,7 @@ describe('editCorrector', () => {
 
       const result = await ensureCorrectFileContent(
         content,
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
 
@@ -757,7 +757,7 @@ describe('editCorrector', () => {
 
       const result = await ensureCorrectFileContent(
         content,
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
 

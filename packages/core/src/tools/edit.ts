@@ -230,7 +230,7 @@ Expectation for required parameters:
         params.file_path,
         currentContent,
         params,
-        this.config.getGeminiClient(),
+        this.config.getGrokClient(),
         abortSignal,
       );
       finalOldString = correctedEdit.params.old_string;

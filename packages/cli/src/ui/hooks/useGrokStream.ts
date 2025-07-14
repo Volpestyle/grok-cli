@@ -8,12 +8,12 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useInput } from 'ink';
 import {
   Config,
-  GeminiClient,
-  GeminiEventType as ServerGeminiEventType,
-  ServerGeminiStreamEvent as GeminiEvent,
-  ServerGeminiContentEvent as ContentEvent,
-  ServerGeminiErrorEvent as ErrorEvent,
-  ServerGeminiChatCompressedEvent,
+  GrokClient,
+  GrokEventType as ServerGrokEventType,
+  ServerGrokStreamEvent as GrokEvent,
+  ServerGrokContentEvent as ContentEvent,
+  ServerGrokErrorEvent as ErrorEvent,
+  ServerGrokChatCompressedEvent,
   getErrorMessage,
   isNodeError,
   MessageSenderType,
@@ -24,8 +24,8 @@ import {
   ThoughtSummary,
   UnauthorizedError,
   UserPromptEvent,
-  DEFAULT_GEMINI_FLASH_MODEL,
-} from '@google/gemini-cli-core';
+  DEFAULT_GROK_MODEL,
+} from 'grok-cli-core';
 import { type Part, type PartListUnion } from '@google/genai';
 import {
   StreamingState,
@@ -74,11 +74,11 @@ enum StreamProcessingStatus {
 }
 
 /**
- * Manages the Gemini stream, including user input, command processing,
+ * Manages the Grok stream, including user input, command processing,
  * API interaction, and tool call lifecycle.
  */
-export const useGeminiStream = (
-  geminiClient: GeminiClient,
+export const useGrokStream = (
+  grokClient: GrokClient,
   history: HistoryItem[],
   addItem: UseHistoryManagerReturn['addItem'],
   setShowHelp: React.Dispatch<React.SetStateAction<boolean>>,
@@ -152,7 +152,7 @@ export const useGeminiStream = (
     onExec,
     onDebugMessage,
     config,
-    geminiClient,
+    grokClient,
   );
 
   const streamingState = useMemo(() => {
@@ -200,7 +200,7 @@ export const useGeminiStream = (
     }
   });
 
-  const prepareQueryForGemini = useCallback(
+  const prepareQueryForGrok = useCallback(
     async (
       query: PartListUnion,
       userMessageTimestamp: number,
@@ -217,7 +217,7 @@ export const useGeminiStream = (
         return { queryToSend: null, shouldProceed: false };
       }
 
-      let localQueryToSendToGemini: PartListUnion | null = null;
+      let localQueryToSendToGrok: PartListUnion | null = null;
 
       if (typeof query === 'string') {
         const trimmedQuery = query.trim();
@@ -269,27 +269,27 @@ export const useGeminiStream = (
           if (!atCommandResult.shouldProceed) {
             return { queryToSend: null, shouldProceed: false };
           }
-          localQueryToSendToGemini = atCommandResult.processedQuery;
+          localQueryToSendToGrok = atCommandResult.processedQuery;
         } else {
-          // Normal query for Gemini
+          // Normal query for Grok
           addItem(
             { type: MessageType.USER, text: trimmedQuery },
             userMessageTimestamp,
           );
-          localQueryToSendToGemini = trimmedQuery;
+          localQueryToSendToGrok = trimmedQuery;
         }
       } else {
         // It's a function response (PartListUnion that isn't a string)
-        localQueryToSendToGemini = query;
+        localQueryToSendToGrok = query;
       }
 
-      if (localQueryToSendToGemini === null) {
+      if (localQueryToSendToGrok === null) {
         onDebugMessage(
-          'Query processing resulted in null, not sending to Gemini.',
+          'Query processing resulted in null, not sending to Grok.',
         );
         return { queryToSend: null, shouldProceed: false };
       }
-      return { queryToSend: localQueryToSendToGemini, shouldProceed: true };
+      return { queryToSend: localQueryToSendToGrok, shouldProceed: true };
     },
     [
       config,
@@ -308,35 +308,35 @@ export const useGeminiStream = (
   const handleContentEvent = useCallback(
     (
       eventValue: ContentEvent['value'],
-      currentGeminiMessageBuffer: string,
+      currentGrokMessageBuffer: string,
       userMessageTimestamp: number,
     ): string => {
       if (turnCancelledRef.current) {
         // Prevents additional output after a user initiated cancel.
         return '';
       }
-      let newGeminiMessageBuffer = currentGeminiMessageBuffer + eventValue;
+      let newGrokMessageBuffer = currentGrokMessageBuffer + eventValue;
       if (
-        pendingHistoryItemRef.current?.type !== 'gemini' &&
-        pendingHistoryItemRef.current?.type !== 'gemini_content'
+        pendingHistoryItemRef.current?.type !== 'grok' &&
+        pendingHistoryItemRef.current?.type !== 'grok_content'
       ) {
         if (pendingHistoryItemRef.current) {
           addItem(pendingHistoryItemRef.current, userMessageTimestamp);
         }
-        setPendingHistoryItem({ type: 'gemini', text: '' });
-        newGeminiMessageBuffer = eventValue;
+        setPendingHistoryItem({ type: 'grok', text: '' });
+        newGrokMessageBuffer = eventValue;
       }
       // Split large messages for better rendering performance. Ideally,
       // we should maximize the amount of output sent to <Static />.
-      const splitPoint = findLastSafeSplitPoint(newGeminiMessageBuffer);
-      if (splitPoint === newGeminiMessageBuffer.length) {
+      const splitPoint = findLastSafeSplitPoint(newGrokMessageBuffer);
+      if (splitPoint === newGrokMessageBuffer.length) {
         // Update the existing message with accumulated content
         setPendingHistoryItem((item) => ({
-          type: item?.type as 'gemini' | 'gemini_content',
-          text: newGeminiMessageBuffer,
+          type: item?.type as 'grok' | 'grok_content',
+          text: newGrokMessageBuffer,
         }));
       } else {
-        // This indicates that we need to split up this Gemini Message.
+        // This indicates that we need to split up this Grok Message.
         // Splitting a message is primarily a performance consideration. There is a
         // <Static> component at the root of App.tsx which takes care of rendering
         // content statically or dynamically. Everything but the last message is
@@ -344,21 +344,21 @@ export const useGeminiStream = (
         // multiple times per-second (as streaming occurs). Prior to this change you'd
         // see heavy flickering of the terminal. This ensures that larger messages get
         // broken up so that there are more "statically" rendered.
-        const beforeText = newGeminiMessageBuffer.substring(0, splitPoint);
-        const afterText = newGeminiMessageBuffer.substring(splitPoint);
+        const beforeText = newGrokMessageBuffer.substring(0, splitPoint);
+        const afterText = newGrokMessageBuffer.substring(splitPoint);
         addItem(
           {
             type: pendingHistoryItemRef.current?.type as
-              | 'gemini'
-              | 'gemini_content',
+              | 'grok'
+              | 'grok_content',
             text: beforeText,
           },
           userMessageTimestamp,
         );
-        setPendingHistoryItem({ type: 'gemini_content', text: afterText });
-        newGeminiMessageBuffer = afterText;
+        setPendingHistoryItem({ type: 'grok_content', text: afterText });
+        newGrokMessageBuffer = afterText;
       }
-      return newGeminiMessageBuffer;
+      return newGrokMessageBuffer;
     },
     [addItem, pendingHistoryItemRef, setPendingHistoryItem],
   );
@@ -411,7 +411,7 @@ export const useGeminiStream = (
             config.getContentGeneratorConfig()?.authType,
             undefined,
             config.getModel(),
-            DEFAULT_GEMINI_FLASH_MODEL,
+            DEFAULT_GROK_MODEL,
           ),
         },
         userMessageTimestamp,
@@ -421,7 +421,7 @@ export const useGeminiStream = (
   );
 
   const handleChatCompressionEvent = useCallback(
-    (eventValue: ServerGeminiChatCompressedEvent['value']) =>
+    (eventValue: ServerGrokChatCompressedEvent['value']) =>
       addItem(
         {
           type: 'info',
@@ -450,43 +450,43 @@ export const useGeminiStream = (
     [addItem, config],
   );
 
-  const processGeminiStreamEvents = useCallback(
+  const processGrokStreamEvents = useCallback(
     async (
-      stream: AsyncIterable<GeminiEvent>,
+      stream: AsyncIterable<GrokEvent>,
       userMessageTimestamp: number,
       signal: AbortSignal,
     ): Promise<StreamProcessingStatus> => {
-      let geminiMessageBuffer = '';
+      let grokMessageBuffer = '';
       const toolCallRequests: ToolCallRequestInfo[] = [];
       for await (const event of stream) {
         switch (event.type) {
-          case ServerGeminiEventType.Thought:
+          case ServerGrokEventType.Thought:
             setThought(event.value);
             break;
-          case ServerGeminiEventType.Content:
-            geminiMessageBuffer = handleContentEvent(
+          case ServerGrokEventType.Content:
+            grokMessageBuffer = handleContentEvent(
               event.value,
-              geminiMessageBuffer,
+              grokMessageBuffer,
               userMessageTimestamp,
             );
             break;
-          case ServerGeminiEventType.ToolCallRequest:
+          case ServerGrokEventType.ToolCallRequest:
             toolCallRequests.push(event.value);
             break;
-          case ServerGeminiEventType.UserCancelled:
+          case ServerGrokEventType.UserCancelled:
             handleUserCancelledEvent(userMessageTimestamp);
             break;
-          case ServerGeminiEventType.Error:
+          case ServerGrokEventType.Error:
             handleErrorEvent(event.value, userMessageTimestamp);
             break;
-          case ServerGeminiEventType.ChatCompressed:
+          case ServerGrokEventType.ChatCompressed:
             handleChatCompressionEvent(event.value);
             break;
-          case ServerGeminiEventType.ToolCallConfirmation:
-          case ServerGeminiEventType.ToolCallResponse:
+          case ServerGrokEventType.ToolCallConfirmation:
+          case ServerGrokEventType.ToolCallResponse:
             // do nothing
             break;
-          case ServerGeminiEventType.MaxSessionTurns:
+          case ServerGrokEventType.MaxSessionTurns:
             handleMaxSessionTurnsEvent();
             break;
           default: {
@@ -541,7 +541,7 @@ export const useGeminiStream = (
         prompt_id = config.getSessionId() + '########' + getPromptCount();
       }
 
-      const { queryToSend, shouldProceed } = await prepareQueryForGemini(
+      const { queryToSend, shouldProceed } = await prepareQueryForGrok(
         query,
         userMessageTimestamp,
         abortSignal,
@@ -560,12 +560,12 @@ export const useGeminiStream = (
       setInitError(null);
 
       try {
-        const stream = geminiClient.sendMessageStream(
+        const stream = grokClient.sendMessageStream(
           queryToSend,
           abortSignal,
           prompt_id!,
         );
-        const processingStatus = await processGeminiStreamEvents(
+        const processingStatus = await processGrokStreamEvents(
           stream,
           userMessageTimestamp,
           abortSignal,
@@ -591,7 +591,7 @@ export const useGeminiStream = (
                 config.getContentGeneratorConfig()?.authType,
                 undefined,
                 config.getModel(),
-                DEFAULT_GEMINI_FLASH_MODEL,
+                DEFAULT_GROK_MODEL,
               ),
             },
             userMessageTimestamp,
@@ -605,13 +605,13 @@ export const useGeminiStream = (
       streamingState,
       setShowHelp,
       setModelSwitchedFromQuotaError,
-      prepareQueryForGemini,
-      processGeminiStreamEvents,
+      prepareQueryForGrok,
+      processGrokStreamEvents,
       pendingHistoryItemRef,
       addItem,
       setPendingHistoryItem,
       setInitError,
-      geminiClient,
+      grokClient,
       onAuthError,
       config,
       startNewPrompt,
@@ -680,13 +680,13 @@ export const useGeminiStream = (
         return;
       }
 
-      // If all the tools were cancelled, don't submit a response to Gemini.
+      // If all the tools were cancelled, don't submit a response to Grok.
       const allToolsCancelled = geminiTools.every(
         (tc) => tc.status === 'cancelled',
       );
 
       if (allToolsCancelled) {
-        if (geminiClient) {
+        if (grokClient) {
           // We need to manually add the function responses to the history
           // so the model knows the tools were cancelled.
           const responsesToAdd = geminiTools.flatMap(
@@ -702,7 +702,7 @@ export const useGeminiStream = (
               combinedParts.push(response);
             }
           }
-          geminiClient.addHistory({
+          grokClient.addHistory({
             role: 'user',
             parts: combinedParts,
           });
@@ -745,7 +745,7 @@ export const useGeminiStream = (
       isResponding,
       submitQuery,
       markToolsAsSubmitted,
-      geminiClient,
+      grokClient,
       performMemoryRefresh,
       modelSwitchedFromQuotaError,
     ],
@@ -820,7 +820,7 @@ export const useGeminiStream = (
             const toolName = toolCall.request.name;
             const fileName = path.basename(filePath);
             const toolCallWithSnapshotFileName = `${timestamp}-${fileName}-${toolName}.json`;
-            const clientHistory = await geminiClient?.getHistory();
+            const clientHistory = await grokClient?.getHistory();
             const toolCallWithSnapshotFilePath = path.join(
               checkpointDir,
               toolCallWithSnapshotFileName,
@@ -854,7 +854,7 @@ export const useGeminiStream = (
       }
     };
     saveRestorableToolCalls();
-  }, [toolCalls, config, onDebugMessage, gitService, history, geminiClient]);
+  }, [toolCalls, config, onDebugMessage, gitService, history, grokClient]);
 
   return {
     streamingState,

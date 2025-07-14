@@ -6,7 +6,7 @@
 
 import { GaxiosError } from 'gaxios';
 import { useState, useEffect, useCallback } from 'react';
-import { Config, CodeAssistServer, UserTierId } from '@google/gemini-cli-core';
+import { Config, CodeAssistServer, UserTierId } from 'grok-cli-core';
 
 export interface PrivacyState {
   isLoading: boolean;
@@ -81,7 +81,7 @@ export const usePrivacySettings = (config: Config) => {
 };
 
 function getCodeAssistServer(config: Config): CodeAssistServer {
-  const server = config.getGeminiClient().getContentGenerator();
+  const server = config.getGrokClient().getContentGenerator();
   // Neither of these cases should ever happen.
   if (!(server instanceof CodeAssistServer)) {
     throw new Error('Oauth not being used');

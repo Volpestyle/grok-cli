@@ -7,13 +7,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   Turn,
-  GeminiEventType,
-  ServerGeminiToolCallRequestEvent,
-  ServerGeminiErrorEvent,
+  GrokEventType,
+  ServerGrokToolCallRequestEvent,
+  ServerGrokErrorEvent,
 } from './turn.js';
 import { GenerateContentResponse, Part, Content } from '@google/genai';
 import { reportError } from '../utils/errorReporting.js';
-import { GeminiChat } from './geminiChat.js';
+import { GrokChat } from './grokChat.js';
 
 const mockSendMessageStream = vi.fn();
 const mockGetHistory = vi.fn();
@@ -55,7 +55,7 @@ describe('Turn', () => {
       sendMessageStream: mockSendMessageStream,
       getHistory: mockGetHistory,
     };
-    turn = new Turn(mockChatInstance as unknown as GeminiChat, 'prompt-id-1');
+    turn = new Turn(mockChatInstance as unknown as GrokChat, 'prompt-id-1');
     mockGetHistory.mockReturnValue([]);
     mockSendMessageStream.mockResolvedValue((async function* () {})());
   });
@@ -101,8 +101,8 @@ describe('Turn', () => {
       );
 
       expect(events).toEqual([
-        { type: GeminiEventType.Content, value: 'Hello' },
-        { type: GeminiEventType.Content, value: ' world' },
+        { type: GrokEventType.Content, value: 'Hello' },
+        { type: GrokEventType.Content, value: ' world' },
       ]);
       expect(turn.getDebugResponses().length).toBe(2);
     });
@@ -133,8 +133,8 @@ describe('Turn', () => {
       }
 
       expect(events.length).toBe(2);
-      const event1 = events[0] as ServerGeminiToolCallRequestEvent;
-      expect(event1.type).toBe(GeminiEventType.ToolCallRequest);
+      const event1 = events[0] as ServerGrokToolCallRequestEvent;
+      expect(event1.type).toBe(GrokEventType.ToolCallRequest);
       expect(event1.value).toEqual(
         expect.objectContaining({
           callId: 'fc1',
@@ -145,8 +145,8 @@ describe('Turn', () => {
       );
       expect(turn.pendingToolCalls[0]).toEqual(event1.value);
 
-      const event2 = events[1] as ServerGeminiToolCallRequestEvent;
-      expect(event2.type).toBe(GeminiEventType.ToolCallRequest);
+      const event2 = events[1] as ServerGrokToolCallRequestEvent;
+      expect(event2.type).toBe(GrokEventType.ToolCallRequest);
       expect(event2.value).toEqual(
         expect.objectContaining({
           name: 'tool2',
@@ -186,8 +186,8 @@ describe('Turn', () => {
         events.push(event);
       }
       expect(events).toEqual([
-        { type: GeminiEventType.Content, value: 'First part' },
-        { type: GeminiEventType.UserCancelled },
+        { type: GrokEventType.Content, value: 'First part' },
+        { type: GrokEventType.UserCancelled },
       ]);
       expect(turn.getDebugResponses().length).toBe(1);
     });
@@ -210,8 +210,8 @@ describe('Turn', () => {
       }
 
       expect(events.length).toBe(1);
-      const errorEvent = events[0] as ServerGeminiErrorEvent;
-      expect(errorEvent.type).toBe(GeminiEventType.Error);
+      const errorEvent = events[0] as ServerGrokErrorEvent;
+      expect(errorEvent.type).toBe(GrokEventType.Error);
       expect(errorEvent.value).toEqual({
         error: { message: 'API Error', status: undefined },
       });
@@ -245,8 +245,8 @@ describe('Turn', () => {
       }
 
       expect(events.length).toBe(3);
-      const event1 = events[0] as ServerGeminiToolCallRequestEvent;
-      expect(event1.type).toBe(GeminiEventType.ToolCallRequest);
+      const event1 = events[0] as ServerGrokToolCallRequestEvent;
+      expect(event1.type).toBe(GrokEventType.ToolCallRequest);
       expect(event1.value).toEqual(
         expect.objectContaining({
           callId: 'fc1',
@@ -257,8 +257,8 @@ describe('Turn', () => {
       );
       expect(turn.pendingToolCalls[0]).toEqual(event1.value);
 
-      const event2 = events[1] as ServerGeminiToolCallRequestEvent;
-      expect(event2.type).toBe(GeminiEventType.ToolCallRequest);
+      const event2 = events[1] as ServerGrokToolCallRequestEvent;
+      expect(event2.type).toBe(GrokEventType.ToolCallRequest);
       expect(event2.value).toEqual(
         expect.objectContaining({
           callId: 'fc2',
@@ -269,8 +269,8 @@ describe('Turn', () => {
       );
       expect(turn.pendingToolCalls[1]).toEqual(event2.value);
 
-      const event3 = events[2] as ServerGeminiToolCallRequestEvent;
-      expect(event3.type).toBe(GeminiEventType.ToolCallRequest);
+      const event3 = events[2] as ServerGrokToolCallRequestEvent;
+      expect(event3.type).toBe(GrokEventType.ToolCallRequest);
       expect(event3.value).toEqual(
         expect.objectContaining({
           callId: 'fc3',

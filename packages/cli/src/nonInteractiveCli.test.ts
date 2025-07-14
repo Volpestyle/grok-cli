@@ -7,17 +7,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { runNonInteractive } from './nonInteractiveCli.js';
-import { Config, GeminiClient, ToolRegistry } from '@google/gemini-cli-core';
+import { Config, GrokClient, ToolRegistry } from 'grok-cli-core';
 import { GenerateContentResponse, Part, FunctionCall } from '@google/genai';
 
 // Mock dependencies
-vi.mock('@google/gemini-cli-core', async () => {
+vi.mock('grok-cli', async () => {
   const actualCore = await vi.importActual<
-    typeof import('@google/gemini-cli-core')
-  >('@google/gemini-cli-core');
+    typeof import('grok-cli')
+  >('grok-cli');
   return {
     ...actualCore,
-    GeminiClient: vi.fn(),
+    GrokClient: vi.fn(),
     ToolRegistry: vi.fn(),
     executeToolCall: vi.fn(),
   };
@@ -25,7 +25,7 @@ vi.mock('@google/gemini-cli-core', async () => {
 
 describe('runNonInteractive', () => {
   let mockConfig: Config;
-  let mockGeminiClient: GeminiClient;
+  let mockGrokClient: GrokClient;
   let mockToolRegistry: ToolRegistry;
   let mockChat: {
     sendMessageStream: ReturnType<typeof vi.fn>;
@@ -38,20 +38,20 @@ describe('runNonInteractive', () => {
     mockChat = {
       sendMessageStream: vi.fn(),
     };
-    mockGeminiClient = {
+    mockGrokClient = {
       getChat: vi.fn().mockResolvedValue(mockChat),
-    } as unknown as GeminiClient;
+    } as unknown as GrokClient;
     mockToolRegistry = {
       getFunctionDeclarations: vi.fn().mockReturnValue([]),
       getTool: vi.fn(),
     } as unknown as ToolRegistry;
 
-    vi.mocked(GeminiClient).mockImplementation(() => mockGeminiClient);
+    vi.mocked(GrokClient).mockImplementation(() => mockGrokClient);
     vi.mocked(ToolRegistry).mockImplementation(() => mockToolRegistry);
 
     mockConfig = {
       getToolRegistry: vi.fn().mockReturnValue(mockToolRegistry),
-      getGeminiClient: vi.fn().mockReturnValue(mockGeminiClient),
+      getGrokClient: vi.fn().mockReturnValue(mockGrokClient),
       getContentGeneratorConfig: vi.fn().mockReturnValue({}),
       getMaxSessionTurns: vi.fn().mockReturnValue(10),
       initialize: vi.fn(),
@@ -114,7 +114,7 @@ describe('runNonInteractive', () => {
     };
 
     const { executeToolCall: mockCoreExecuteToolCall } = await import(
-      '@google/gemini-cli-core'
+      'grok-cli'
     );
     vi.mocked(mockCoreExecuteToolCall).mockResolvedValue({
       callId: 'fc1',
@@ -168,7 +168,7 @@ describe('runNonInteractive', () => {
     };
 
     const { executeToolCall: mockCoreExecuteToolCall } = await import(
-      '@google/gemini-cli-core'
+      'grok-cli'
     );
     vi.mocked(mockCoreExecuteToolCall).mockResolvedValue({
       callId: 'fcError',
@@ -241,7 +241,7 @@ describe('runNonInteractive', () => {
     };
 
     const { executeToolCall: mockCoreExecuteToolCall } = await import(
-      '@google/gemini-cli-core'
+      'grok-cli'
     );
     vi.mocked(mockCoreExecuteToolCall).mockResolvedValue({
       callId: 'fcNotFound',
@@ -314,7 +314,7 @@ describe('runNonInteractive', () => {
     vi.mocked(mockConfig.getMaxSessionTurns).mockReturnValue(1);
 
     const { executeToolCall: mockCoreExecuteToolCall } = await import(
-      '@google/gemini-cli-core'
+      'grok-cli'
     );
     vi.mocked(mockCoreExecuteToolCall).mockResolvedValue({
       callId: 'fcLoop',

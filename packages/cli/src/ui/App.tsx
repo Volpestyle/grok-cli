@@ -18,7 +18,7 @@ import {
 } from 'ink';
 import { StreamingState, type HistoryItem, MessageType } from './types.js';
 import { useTerminalSize } from './hooks/useTerminalSize.js';
-import { useGeminiStream } from './hooks/useGeminiStream.js';
+import { useGrokStream } from './hooks/useGrokStream.js';
 import { useLoadingIndicator } from './hooks/useLoadingIndicator.js';
 import { useThemeCommand } from './hooks/useThemeCommand.js';
 import { useAuthCommand } from './hooks/useAuthCommand.js';
@@ -38,7 +38,7 @@ import { AuthInProgress } from './components/AuthInProgress.js';
 import { EditorSettingsDialog } from './components/EditorSettingsDialog.js';
 import { Colors } from './colors.js';
 import { Help } from './components/Help.js';
-import { loadHierarchicalGeminiMemory } from '../config/config.js';
+import { loadHierarchicalGrokMemory } from '../config/config.js';
 import { LoadedSettings } from '../config/settings.js';
 import { Tips } from './components/Tips.js';
 import { ConsolePatcher } from './utils/ConsolePatcher.js';
@@ -51,13 +51,13 @@ import process from 'node:process';
 import {
   getErrorMessage,
   type Config,
-  getAllGeminiMdFilenames,
+  getAllGrokMdFilenames,
   ApprovalMode,
   isEditorAvailable,
   EditorType,
   FlashFallbackEvent,
   logFlashFallback,
-} from '@google/gemini-cli-core';
+} from 'grok-cli-core';
 import { validateAuthMethod } from '../config/auth.js';
 import { useLogger } from './hooks/useLogger.js';
 import { StreamingContext } from './contexts/StreamingContext.js';
@@ -74,7 +74,7 @@ import {
   isProQuotaExceededError,
   isGenericQuotaExceededError,
   UserTierId,
-} from '@google/gemini-cli-core';
+} from 'grok-cli-core';
 import { checkForUpdates } from './utils/updateCheck.js';
 import ansiEscapes from 'ansi-escapes';
 import { OverflowProvider } from './contexts/OverflowContext.js';
@@ -130,7 +130,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     setStaticKey((prev) => prev + 1);
   }, [setStaticKey, stdout]);
 
-  const [geminiMdFileCount, setGeminiMdFileCount] = useState<number>(0);
+  const [grokMdFileCount, setGrokMdFileCount] = useState<number>(0);
   const [debugMessage, setDebugMessage] = useState<string>('');
   const [showHelp, setShowHelp] = useState<boolean>(false);
   const [themeError, setThemeError] = useState<string | null>(null);
@@ -229,20 +229,20 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     addItem(
       {
         type: MessageType.INFO,
-        text: 'Refreshing hierarchical memory (GEMINI.md or other context files)...',
+        text: 'Refreshing hierarchical memory (GROK.md or other context files)...',
       },
       Date.now(),
     );
     try {
-      const { memoryContent, fileCount } = await loadHierarchicalGeminiMemory(
+      const { memoryContent, fileCount } = await loadHierarchicalGrokMemory(
         process.cwd(),
         config.getDebugMode(),
         config.getFileService(),
         config.getExtensionContextFilePaths(),
       );
       config.setUserMemory(memoryContent);
-      config.setGeminiMdFileCount(fileCount);
-      setGeminiMdFileCount(fileCount);
+      config.setGrokMdFileCount(fileCount);
+      setGrokMdFileCount(fileCount);
 
       addItem(
         {
@@ -307,8 +307,8 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
         } else {
           message = `⚡ You have reached your daily ${currentModel} quota limit.
 ⚡ Automatically switching from ${currentModel} to ${fallbackModel} for the remainder of this session.
-⚡ To increase your limits, upgrade to a Gemini Code Assist Standard or Enterprise plan with higher limits at https://goo.gle/set-up-gemini-code-assist
-⚡ Or you can utilize a Gemini API Key. See: https://goo.gle/gemini-cli-docs-auth#gemini-api-key
+⚡ To increase your limits, check xAI API pricing at https://x.ai/api
+⚡ Or you can utilize a Grok API Key. See: https://x.ai/api
 ⚡ You can switch authentication methods by typing /auth`;
         }
       } else if (error && isGenericQuotaExceededError(error)) {
@@ -319,8 +319,8 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
         } else {
           message = `⚡ You have reached your daily quota limit.
 ⚡ Automatically switching from ${currentModel} to ${fallbackModel} for the remainder of this session.
-⚡ To increase your limits, upgrade to a Gemini Code Assist Standard or Enterprise plan with higher limits at https://goo.gle/set-up-gemini-code-assist
-⚡ Or you can utilize a Gemini API Key. See: https://goo.gle/gemini-cli-docs-auth#gemini-api-key
+⚡ To increase your limits, check xAI API pricing at https://x.ai/api
+⚡ Or you can utilize a Grok API Key. See: https://x.ai/api
 ⚡ You can switch authentication methods by typing /auth`;
         }
       } else {
@@ -333,8 +333,8 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
           // Default fallback message for other cases (like consecutive 429s)
           message = `⚡ Automatically switching from ${currentModel} to ${fallbackModel} for faster responses for the remainder of this session.
 ⚡ Possible reasons for this are that you have received multiple consecutive capacity errors or you have reached your daily ${currentModel} quota limit
-⚡ To increase your limits, upgrade to a Gemini Code Assist Standard or Enterprise plan with higher limits at https://goo.gle/set-up-gemini-code-assist
-⚡ Or you can utilize a Gemini API Key. See: https://goo.gle/gemini-cli-docs-auth#gemini-api-key
+⚡ To increase your limits, check xAI API pricing at https://x.ai/api
+⚡ Or you can utilize a Grok API Key. See: https://x.ai/api
 ⚡ You can switch authentication methods by typing /auth`;
         }
       }
@@ -483,7 +483,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
 
   useEffect(() => {
     if (config) {
-      setGeminiMdFileCount(config.getGeminiMdFileCount());
+      setGrokMdFileCount(config.getGrokMdFileCount());
     }
   }, [config]);
 
@@ -506,10 +506,10 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     streamingState,
     submitQuery,
     initError,
-    pendingHistoryItems: pendingGeminiHistoryItems,
+    pendingHistoryItems: pendingGrokHistoryItems,
     thought,
-  } = useGeminiStream(
-    config.getGeminiClient(),
+  } = useGrokStream(
+    config.getGrokClient(),
     history,
     addItem,
     setShowHelp,
@@ -523,7 +523,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     modelSwitchedFromQuotaError,
     setModelSwitchedFromQuotaError,
   );
-  pendingHistoryItems.push(...pendingGeminiHistoryItems);
+  pendingHistoryItems.push(...pendingGrokHistoryItems);
   const { elapsedTime, currentLoadingPhrase } =
     useLoadingIndicator(streamingState);
   const showAutoAcceptIndicator = useAutoAcceptIndicator({ config });
@@ -641,11 +641,11 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     if (fromSettings) {
       return Array.isArray(fromSettings) ? fromSettings : [fromSettings];
     }
-    return getAllGeminiMdFilenames();
+    return getAllGrokMdFilenames();
   }, [settings.merged.contextFileName]);
 
   const initialPrompt = useMemo(() => config.getQuestion(), [config]);
-  const geminiClient = config.getGeminiClient();
+  const grokClient = config.getGrokClient();
 
   useEffect(() => {
     if (
@@ -656,7 +656,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
       !isThemeDialogOpen &&
       !isEditorDialogOpen &&
       !showPrivacyNotice &&
-      geminiClient?.isInitialized?.()
+      grokClient?.isInitialized?.()
     ) {
       submitQuery(initialPrompt);
       initialPromptSubmitted.current = true;
@@ -669,7 +669,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     isThemeDialogOpen,
     isEditorDialogOpen,
     showPrivacyNotice,
-    geminiClient,
+    grokClient,
   ]);
 
   if (quittingMessages) {
@@ -869,7 +869,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
                 width="100%"
               >
                 <Box>
-                  {process.env.GEMINI_SYSTEM_MD && (
+                  {process.env.GROK_SYSTEM_MD && (
                     <Text color={Colors.AccentRed}>|⌐■_■| </Text>
                   )}
                   {ctrlCPressedOnce ? (
@@ -882,7 +882,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
                     </Text>
                   ) : (
                     <ContextSummaryDisplay
-                      geminiMdFileCount={geminiMdFileCount}
+                      grokMdFileCount={grokMdFileCount}
                       contextFileNames={contextFileNames}
                       mcpServers={config.getMcpServers()}
                       showToolDescriptions={showToolDescriptions}

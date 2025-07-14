@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ThoughtSummary } from '@google/gemini-cli-core';
+import { ThoughtSummary } from 'grok-cli-core';
 import React from 'react';
 import { Box, Text } from 'ink';
 import { Colors } from '../colors.js';
 import { useStreamingContext } from '../contexts/StreamingContext.js';
 import { StreamingState } from '../types.js';
-import { GeminiRespondingSpinner } from './GeminiRespondingSpinner.js';
+import { GrokRespondingSpinner } from './GrokRespondingSpinner.js';
 import { formatDuration } from '../utils/formatters.js';
 
 interface LoadingIndicatorProps {
@@ -39,7 +39,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
       {/* Main loading line */}
       <Box>
         <Box marginRight={1}>
-          <GeminiRespondingSpinner
+          <GrokRespondingSpinner
             nonRespondingDisplay={
               streamingState === StreamingState.WaitingForConfirmation
                 ? '⠏'

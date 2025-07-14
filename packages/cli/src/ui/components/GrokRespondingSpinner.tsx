@@ -11,7 +11,7 @@ import type { SpinnerName } from 'cli-spinners';
 import { useStreamingContext } from '../contexts/StreamingContext.js';
 import { StreamingState } from '../types.js';
 
-interface GeminiRespondingSpinnerProps {
+interface GrokRespondingSpinnerProps {
   /**
    * Optional string to display when not in Responding state.
    * If not provided and not Responding, renders null.
@@ -20,9 +20,10 @@ interface GeminiRespondingSpinnerProps {
   spinnerType?: SpinnerName;
 }
 
-export const GeminiRespondingSpinner: React.FC<
-  GeminiRespondingSpinnerProps
-> = ({ nonRespondingDisplay, spinnerType = 'dots' }) => {
+export const GrokRespondingSpinner: React.FC<GrokRespondingSpinnerProps> = ({
+  nonRespondingDisplay,
+  spinnerType = 'dots',
+}) => {
   const streamingState = useStreamingContext();
 
   if (streamingState === StreamingState.Responding) {

@@ -14,11 +14,11 @@ import {
   ToolRegistry,
   AccessibilitySettings,
   SandboxConfig,
-  GeminiClient,
-} from '@google/gemini-cli-core';
+  GrokClient,
+} from 'grok-cli-core';
 import { LoadedSettings, SettingsFile, Settings } from '../config/settings.js';
 import process from 'node:process';
-import { useGeminiStream } from './hooks/useGeminiStream.js';
+import { useGrokStream } from './hooks/useGrokStream.js';
 import { StreamingState } from './types.js';
 import { Tips } from './components/Tips.js';
 
@@ -38,7 +38,7 @@ interface MockServerConfig {
   mcpServers?: Record<string, MCPServerConfig>; // Use imported MCPServerConfig
   userAgent: string;
   userMemory: string;
-  geminiMdFileCount: number;
+  grokMdFileCount: number;
   approvalMode: ApprovalMode;
   vertexai?: boolean;
   showMemoryUsage?: boolean;
@@ -69,15 +69,15 @@ interface MockServerConfig {
   getShowMemoryUsage: Mock<() => boolean>;
   getAccessibility: Mock<() => AccessibilitySettings>;
   getProjectRoot: Mock<() => string | undefined>;
-  getAllGeminiMdFilenames: Mock<() => string[]>;
-  getGeminiClient: Mock<() => GeminiClient | undefined>;
+  getAllGrokMdFilenames: Mock<() => string[]>;
+  getGrokClient: Mock<() => GrokClient | undefined>;
   getUserTier: Mock<() => Promise<string | undefined>>;
 }
 
-// Mock @google/gemini-cli-core and its Config class
-vi.mock('@google/gemini-cli-core', async (importOriginal) => {
+// Mock grok-cli and its Config class
+vi.mock('grok-cli', async (importOriginal) => {
   const actualCore =
-    await importOriginal<typeof import('@google/gemini-cli-core')>();
+    await importOriginal<typeof import('grok-cli')>();
   const ConfigClassMock = vi
     .fn()
     .mockImplementation((optionsPassedToConstructor) => {
@@ -98,7 +98,7 @@ vi.mock('@google/gemini-cli-core', async (importOriginal) => {
         mcpServers: opts.mcpServers,
         userAgent: opts.userAgent || 'test-agent',
         userMemory: opts.userMemory || '',
-        geminiMdFileCount: opts.geminiMdFileCount || 0,
+        grokMdFileCount: opts.grokMdFileCount || 0,
         approvalMode: opts.approvalMode ?? ApprovalMode.DEFAULT,
         vertexai: opts.vertexai,
         showMemoryUsage: opts.showMemoryUsage ?? false,
@@ -121,7 +121,7 @@ vi.mock('@google/gemini-cli-core', async (importOriginal) => {
         getUserAgent: vi.fn(() => opts.userAgent || 'test-agent'),
         getUserMemory: vi.fn(() => opts.userMemory || ''),
         setUserMemory: vi.fn(),
-        getGeminiMdFileCount: vi.fn(() => opts.geminiMdFileCount || 0),
+        getGeminiMdFileCount: vi.fn(() => opts.grokMdFileCount || 0),
         setGeminiMdFileCount: vi.fn(),
         getApprovalMode: vi.fn(() => opts.approvalMode ?? ApprovalMode.DEFAULT),
         setApprovalMode: vi.fn(),
@@ -129,9 +129,9 @@ vi.mock('@google/gemini-cli-core', async (importOriginal) => {
         getShowMemoryUsage: vi.fn(() => opts.showMemoryUsage ?? false),
         getAccessibility: vi.fn(() => opts.accessibility ?? {}),
         getProjectRoot: vi.fn(() => opts.targetDir),
-        getGeminiClient: vi.fn(() => ({})),
+        getGrokClient: vi.fn(() => ({})),
         getCheckpointingEnabled: vi.fn(() => opts.checkpointing ?? true),
-        getAllGeminiMdFilenames: vi.fn(() => ['GEMINI.md']),
+        getAllGrokMdFilenames: vi.fn(() => ['GROK.md']),
         setFlashFallbackHandler: vi.fn(),
         getSessionId: vi.fn(() => 'test-session-id'),
         getUserTier: vi.fn().mockResolvedValue(undefined),
@@ -141,13 +141,13 @@ vi.mock('@google/gemini-cli-core', async (importOriginal) => {
     ...actualCore,
     Config: ConfigClassMock,
     MCPServerConfig: actualCore.MCPServerConfig,
-    getAllGeminiMdFilenames: vi.fn(() => ['GEMINI.md']),
+    getAllGrokMdFilenames: vi.fn(() => ['GROK.md']),
   };
 });
 
 // Mock heavy dependencies or those with side effects
-vi.mock('./hooks/useGeminiStream', () => ({
-  useGeminiStream: vi.fn(() => ({
+vi.mock('./hooks/useGrokStream', () => ({
+  useGrokStream: vi.fn(() => ({
     streamingState: 'Idle',
     submitQuery: vi.fn(),
     initError: null,
@@ -177,7 +177,7 @@ vi.mock('../config/config.js', async (importOriginal) => {
   return {
     // @ts-expect-error - this is fine
     ...actual,
-    loadHierarchicalGeminiMemory: vi
+    loadHierarchicalGrokMemory: vi
       .fn()
       .mockResolvedValue({ memoryContent: '', fileCount: 0 }),
   };
@@ -209,7 +209,7 @@ describe('App UI', () => {
       settings: settings.user || {},
     };
     const workspaceSettingsFile: SettingsFile = {
-      path: '/workspace/.gemini/settings.json',
+      path: '/workspace/.grok/settings.json',
       settings: settings.workspace || {},
     };
     return new LoadedSettings(
@@ -228,7 +228,7 @@ describe('App UI', () => {
       targetDir: '/test/dir',
       debugMode: false,
       userMemory: '',
-      geminiMdFileCount: 0,
+      grokMdFileCount: 0,
       showMemoryUsage: false,
       sessionId: 'test-session-id',
       cwd: '/tmp',
@@ -254,7 +254,7 @@ describe('App UI', () => {
     vi.clearAllMocks(); // Clear mocks after each test
   });
 
-  it('should display default "GEMINI.md" in footer when contextFileName is not set and count is 1', async () => {
+  it('should display default "GROK.md" in footer when contextFileName is not set and count is 1', async () => {
     mockConfig.getGeminiMdFileCount.mockReturnValue(1);
     // For this test, ensure showMemoryUsage is false or debugMode is false if it relies on that
     mockConfig.getDebugMode.mockReturnValue(false);
@@ -269,10 +269,10 @@ describe('App UI', () => {
     );
     currentUnmount = unmount;
     await Promise.resolve(); // Wait for any async updates
-    expect(lastFrame()).toContain('Using 1 GEMINI.md file');
+    expect(lastFrame()).toContain('Using 1 GROK.md file');
   });
 
-  it('should display default "GEMINI.md" with plural when contextFileName is not set and count is > 1', async () => {
+  it('should display default "GROK.md" with plural when contextFileName is not set and count is > 1', async () => {
     mockConfig.getGeminiMdFileCount.mockReturnValue(2);
     mockConfig.getDebugMode.mockReturnValue(false);
     mockConfig.getShowMemoryUsage.mockReturnValue(false);
@@ -286,7 +286,7 @@ describe('App UI', () => {
     );
     currentUnmount = unmount;
     await Promise.resolve();
-    expect(lastFrame()).toContain('Using 2 GEMINI.md files');
+    expect(lastFrame()).toContain('Using 2 GROK.md files');
   });
 
   it('should display custom contextFileName in footer when set and count is 1', async () => {
@@ -372,7 +372,7 @@ describe('App UI', () => {
     expect(lastFrame()).not.toContain('ANY_FILE.MD');
   });
 
-  it('should display GEMINI.md and MCP server count when both are present', async () => {
+  it('should display GROK.md and MCP server count when both are present', async () => {
     mockConfig.getGeminiMdFileCount.mockReturnValue(2);
     mockConfig.getMcpServers.mockReturnValue({
       server1: {} as MCPServerConfig,
@@ -392,7 +392,7 @@ describe('App UI', () => {
     expect(lastFrame()).toContain('server');
   });
 
-  it('should display only MCP server count when GEMINI.md count is 0', async () => {
+  it('should display only MCP server count when GROK.md count is 0', async () => {
     mockConfig.getGeminiMdFileCount.mockReturnValue(0);
     mockConfig.getMcpServers.mockReturnValue({
       server1: {} as MCPServerConfig,
@@ -519,7 +519,7 @@ describe('App UI', () => {
 
       mockConfig.getQuestion = vi.fn(() => 'hello from prompt-interactive');
 
-      vi.mocked(useGeminiStream).mockReturnValue({
+      vi.mocked(useGrokStream).mockReturnValue({
         streamingState: StreamingState.Idle,
         submitQuery: mockSubmitQuery,
         initError: null,
@@ -527,9 +527,9 @@ describe('App UI', () => {
         thought: null,
       });
 
-      mockConfig.getGeminiClient.mockReturnValue({
+      mockConfig.getGrokClient.mockReturnValue({
         isInitialized: vi.fn(() => true),
-      } as unknown as GeminiClient);
+      } as unknown as GrokClient);
 
       const { unmount, rerender } = render(
         <App

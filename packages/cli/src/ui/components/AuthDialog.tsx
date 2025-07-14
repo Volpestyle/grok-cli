@@ -9,7 +9,7 @@ import { Box, Text, useInput } from 'ink';
 import { Colors } from '../colors.js';
 import { RadioButtonSelect } from './shared/RadioButtonSelect.js';
 import { LoadedSettings, SettingScope } from '../../config/settings.js';
-import { AuthType } from '@google/gemini-cli-core';
+import { AuthType } from 'grok-cli-core';
 import { validateAuthMethod } from '../../config/auth.js';
 
 interface AuthDialogProps {
@@ -26,28 +26,17 @@ export function AuthDialog({
   const [errorMessage, setErrorMessage] = useState<string | null>(
     initialErrorMessage
       ? initialErrorMessage
-      : process.env.GEMINI_API_KEY
-        ? 'Existing API key detected (GEMINI_API_KEY). Select "Gemini API Key" option to use it.'
-        : null,
+      : process.env.GROK_API_KEY
+        ? 'Existing API key detected (GROK_API_KEY). Select "Grok API Key" option to use it.'
+        : process.env.GEMINI_API_KEY
+          ? 'Existing API key detected (GEMINI_API_KEY). Select "Gemini API Key" option to use it.'
+          : null,
   );
   const items = [
     {
-      label: 'Login with Google',
-      value: AuthType.LOGIN_WITH_GOOGLE,
+      label: 'Use Grok API Key',
+      value: AuthType.USE_GROK,
     },
-    ...(process.env.CLOUD_SHELL === 'true'
-      ? [
-          {
-            label: 'Use Cloud Shell user credentials',
-            value: AuthType.CLOUD_SHELL,
-          },
-        ]
-      : []),
-    {
-      label: 'Use Gemini API Key',
-      value: AuthType.USE_GEMINI,
-    },
-    { label: 'Vertex AI', value: AuthType.USE_VERTEX_AI },
   ];
 
   const initialAuthIndex = items.findIndex((item) => {
@@ -55,11 +44,15 @@ export function AuthDialog({
       return item.value === settings.merged.selectedAuthType;
     }
 
+    if (process.env.GROK_API_KEY) {
+      return item.value === AuthType.USE_GROK;
+    }
+
     if (process.env.GEMINI_API_KEY) {
       return item.value === AuthType.USE_GEMINI;
     }
 
-    return item.value === AuthType.LOGIN_WITH_GOOGLE;
+    return item.value === AuthType.USE_GROK;
   });
 
   const handleAuthSelect = (authMethod: AuthType) => {
@@ -119,12 +112,12 @@ export function AuthDialog({
         <Text color={Colors.Gray}>(Use Enter to select)</Text>
       </Box>
       <Box marginTop={1}>
-        <Text>Terms of Services and Privacy Notice for Gemini CLI</Text>
+        <Text>Terms of Services and Privacy Notice for Grok CLI</Text>
       </Box>
       <Box marginTop={1}>
         <Text color={Colors.AccentBlue}>
           {
-            'https://github.com/google-gemini/gemini-cli/blob/main/docs/tos-privacy.md'
+            'https://github.com/Volpestyle/grok-cli/blob/main/docs/tos-privacy.md'
           }
         </Text>
       </Box>

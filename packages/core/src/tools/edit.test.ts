@@ -15,7 +15,7 @@ vi.mock('../utils/editCorrector.js', () => ({
 }));
 
 vi.mock('../core/client.js', () => ({
-  GeminiClient: vi.fn().mockImplementation(() => ({
+  GrokClient: vi.fn().mockImplementation(() => ({
     generateJson: mockGenerateJson,
   })),
 }));
@@ -38,19 +38,19 @@ describe('EditTool', () => {
   let tempDir: string;
   let rootDir: string;
   let mockConfig: Config;
-  let geminiClient: any;
+  let grokClient: any;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'edit-tool-test-'));
     rootDir = path.join(tempDir, 'root');
     fs.mkdirSync(rootDir);
 
-    geminiClient = {
+    grokClient = {
       generateJson: mockGenerateJson, // mockGenerateJson is already defined and hoisted
     };
 
     mockConfig = {
-      getGeminiClient: vi.fn().mockReturnValue(geminiClient),
+      getGrokClient: vi.fn().mockReturnValue(grokClient),
       getTargetDir: () => rootDir,
       getApprovalMode: vi.fn(),
       setApprovalMode: vi.fn(),
@@ -70,8 +70,8 @@ describe('EditTool', () => {
       getUserAgent: () => 'test-agent',
       getUserMemory: () => '',
       setUserMemory: vi.fn(),
-      getGeminiMdFileCount: () => 0,
-      setGeminiMdFileCount: vi.fn(),
+      getGrokMdFileCount: () => 0,
+      setGrokMdFileCount: vi.fn(),
       getToolRegistry: () => ({}) as any, // Minimal mock for ToolRegistry
     } as unknown as Config;
 
@@ -337,7 +337,7 @@ describe('EditTool', () => {
           mockCalled = true;
           expect(content).toBe(originalContent);
           expect(p).toBe(params);
-          expect(client).toBe(geminiClient);
+          expect(client).toBe(grokClient);
           return {
             params: {
               file_path: filePath,

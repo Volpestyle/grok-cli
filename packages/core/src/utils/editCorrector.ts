@@ -10,21 +10,21 @@ import {
   SchemaUnion,
   Type,
 } from '@google/genai';
-import { GeminiClient } from '../core/client.js';
+import { GrokClient } from '../core/client.js';
 import { EditToolParams, EditTool } from '../tools/edit.js';
 import { WriteFileTool } from '../tools/write-file.js';
 import { ReadFileTool } from '../tools/read-file.js';
 import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import { GrepTool } from '../tools/grep.js';
 import { LruCache } from './LruCache.js';
-import { DEFAULT_GEMINI_FLASH_MODEL } from '../config/models.js';
+import { DEFAULT_GROK_FLASH_MODEL } from '../config/models.js';
 import {
   isFunctionResponse,
   isFunctionCall,
 } from '../utils/messageInspectors.js';
 import * as fs from 'fs';
 
-const EditModel = DEFAULT_GEMINI_FLASH_MODEL;
+const EditModel = DEFAULT_GROK_FLASH_MODEL;
 const EditConfig: GenerateContentConfig = {
   thinkingConfig: {
     thinkingBudget: 0,
@@ -79,12 +79,12 @@ function getTimestampFromFunctionId(fcnId: string): number {
  * Will look through the gemini client history and determine when the most recent
  * edit to a target file occured. If no edit happened, it will return -1
  * @param filePath the path to the file
- * @param client the geminiClient, so that we can get the history
+ * @param client the grokClient, so that we can get the history
  * @returns a DateTime (as a number) of when the last edit occured, or -1 if no edit was found.
  */
 async function findLastEditTimestamp(
   filePath: string,
-  client: GeminiClient,
+  client: GrokClient,
 ): Promise<number> {
   const history = (await client.getHistory()) ?? [];
 
@@ -155,7 +155,7 @@ async function findLastEditTimestamp(
  *
  * @param currentContent The current content of the file.
  * @param originalParams The original EditToolParams
- * @param client The GeminiClient for LLM calls.
+ * @param client The GrokClient for LLM calls.
  * @returns A promise resolving to an object containing the (potentially corrected)
  *          EditToolParams (as CorrectedEditParams) and the final occurrences count.
  */
@@ -163,7 +163,7 @@ export async function ensureCorrectEdit(
   filePath: string,
   currentContent: string,
   originalParams: EditToolParams, // This is the EditToolParams from edit.ts, without \'corrected\'
-  client: GeminiClient,
+  client: GrokClient,
   abortSignal: AbortSignal,
 ): Promise<CorrectedEditResult> {
   const cacheKey = `${currentContent}---${originalParams.old_string}---${originalParams.new_string}`;
@@ -339,7 +339,7 @@ export async function ensureCorrectEdit(
 
 export async function ensureCorrectFileContent(
   content: string,
-  client: GeminiClient,
+  client: GrokClient,
   abortSignal: AbortSignal,
 ): Promise<string> {
   const cachedResult = fileContentCorrectionCache.get(content);
@@ -377,7 +377,7 @@ const OLD_STRING_CORRECTION_SCHEMA: SchemaUnion = {
 };
 
 export async function correctOldStringMismatch(
-  geminiClient: GeminiClient,
+  grokClient: GrokClient,
   fileContent: string,
   problematicSnippet: string,
   abortSignal: AbortSignal,
@@ -406,7 +406,7 @@ Return ONLY the corrected target snippet in the specified JSON format with the k
   const contents: Content[] = [{ role: 'user', parts: [{ text: prompt }] }];
 
   try {
-    const result = await geminiClient.generateJson(
+    const result = await grokClient.generateJson(
       contents,
       OLD_STRING_CORRECTION_SCHEMA,
       abortSignal,
@@ -454,7 +454,7 @@ const NEW_STRING_CORRECTION_SCHEMA: SchemaUnion = {
  * Adjusts the new_string to align with a corrected old_string, maintaining the original intent.
  */
 export async function correctNewString(
-  geminiClient: GeminiClient,
+  grokClient: GrokClient,
   originalOldString: string,
   correctedOldString: string,
   originalNewString: string,
@@ -494,7 +494,7 @@ Return ONLY the corrected string in the specified JSON format with the key 'corr
   const contents: Content[] = [{ role: 'user', parts: [{ text: prompt }] }];
 
   try {
-    const result = await geminiClient.generateJson(
+    const result = await grokClient.generateJson(
       contents,
       NEW_STRING_CORRECTION_SCHEMA,
       abortSignal,
@@ -534,7 +534,7 @@ const CORRECT_NEW_STRING_ESCAPING_SCHEMA: SchemaUnion = {
 };
 
 export async function correctNewStringEscaping(
-  geminiClient: GeminiClient,
+  grokClient: GrokClient,
   oldString: string,
   potentiallyProblematicNewString: string,
   abortSignal: AbortSignal,
@@ -563,7 +563,7 @@ Return ONLY the corrected string in the specified JSON format with the key 'corr
   const contents: Content[] = [{ role: 'user', parts: [{ text: prompt }] }];
 
   try {
-    const result = await geminiClient.generateJson(
+    const result = await grokClient.generateJson(
       contents,
       CORRECT_NEW_STRING_ESCAPING_SCHEMA,
       abortSignal,
@@ -607,7 +607,7 @@ const CORRECT_STRING_ESCAPING_SCHEMA: SchemaUnion = {
 
 export async function correctStringEscaping(
   potentiallyProblematicString: string,
-  client: GeminiClient,
+  client: GrokClient,
   abortSignal: AbortSignal,
 ): Promise<string> {
   const prompt = `

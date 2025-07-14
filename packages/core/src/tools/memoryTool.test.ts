@@ -7,9 +7,9 @@
 import { vi, describe, it, expect, beforeEach, afterEach, Mock } from 'vitest';
 import {
   MemoryTool,
-  setGeminiMdFilename,
-  getCurrentGeminiMdFilename,
-  getAllGeminiMdFilenames,
+  setGrokMdFilename,
+  getCurrentGrokMdFilename,
+  getAllGrokMdFilenames,
   DEFAULT_CONTEXT_FILENAME,
 } from './memoryTool.js';
 import * as fs from 'fs/promises';
@@ -57,37 +57,37 @@ describe('MemoryTool', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     // Reset GEMINI_MD_FILENAME to its original value after each test
-    setGeminiMdFilename(DEFAULT_CONTEXT_FILENAME);
+    setGrokMdFilename(DEFAULT_CONTEXT_FILENAME);
   });
 
-  describe('setGeminiMdFilename', () => {
+  describe('setGrokMdFilename', () => {
     it('should update currentGeminiMdFilename when a valid new name is provided', () => {
       const newName = 'CUSTOM_CONTEXT.md';
-      setGeminiMdFilename(newName);
-      expect(getCurrentGeminiMdFilename()).toBe(newName);
+      setGrokMdFilename(newName);
+      expect(getCurrentGrokMdFilename()).toBe(newName);
     });
 
     it('should not update currentGeminiMdFilename if the new name is empty or whitespace', () => {
-      const initialName = getCurrentGeminiMdFilename(); // Get current before trying to change
-      setGeminiMdFilename('  ');
-      expect(getCurrentGeminiMdFilename()).toBe(initialName);
+      const initialName = getCurrentGrokMdFilename(); // Get current before trying to change
+      setGrokMdFilename('  ');
+      expect(getCurrentGrokMdFilename()).toBe(initialName);
 
-      setGeminiMdFilename('');
-      expect(getCurrentGeminiMdFilename()).toBe(initialName);
+      setGrokMdFilename('');
+      expect(getCurrentGrokMdFilename()).toBe(initialName);
     });
 
     it('should handle an array of filenames', () => {
       const newNames = ['CUSTOM_CONTEXT.md', 'ANOTHER_CONTEXT.md'];
-      setGeminiMdFilename(newNames);
-      expect(getCurrentGeminiMdFilename()).toBe('CUSTOM_CONTEXT.md');
-      expect(getAllGeminiMdFilenames()).toEqual(newNames);
+      setGrokMdFilename(newNames);
+      expect(getCurrentGrokMdFilename()).toBe('CUSTOM_CONTEXT.md');
+      expect(getAllGrokMdFilenames()).toEqual(newNames);
     });
   });
 
   describe('performAddMemoryEntry (static method)', () => {
     const testFilePath = path.join(
       '/mock/home',
-      '.gemini',
+      '.grok',
       DEFAULT_CONTEXT_FILENAME, // Use the default for basic tests
     );
 
@@ -204,11 +204,11 @@ describe('MemoryTool', () => {
     it('should call performAddMemoryEntry with correct parameters and return success', async () => {
       const params = { fact: 'The sky is blue' };
       const result = await memoryTool.execute(params, mockAbortSignal);
-      // Use getCurrentGeminiMdFilename for the default expectation before any setGeminiMdFilename calls in a test
+      // Use getCurrentGrokMdFilename for the default expectation before any setGrokMdFilename calls in a test
       const expectedFilePath = path.join(
         '/mock/home',
-        '.gemini',
-        getCurrentGeminiMdFilename(), // This will be DEFAULT_CONTEXT_FILENAME unless changed by a test
+        '.grok',
+        getCurrentGrokMdFilename(), // This will be DEFAULT_CONTEXT_FILENAME unless changed by a test
       );
 
       // For this test, we expect the actual fs methods to be passed

@@ -25,7 +25,7 @@ import { ToolRegistry } from './tool-registry.js';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import { GeminiClient } from '../core/client.js';
+import { GrokClient } from '../core/client.js';
 import {
   ensureCorrectEdit,
   ensureCorrectFileContent,
@@ -38,7 +38,7 @@ const rootDir = path.resolve(os.tmpdir(), 'gemini-cli-test-root');
 vi.mock('../core/client.js');
 vi.mock('../utils/editCorrector.js');
 
-let mockGeminiClientInstance: Mocked<GeminiClient>;
+let mockGrokClientInstance: Mocked<GrokClient>;
 const mockEnsureCorrectEdit = vi.fn<typeof ensureCorrectEdit>();
 const mockEnsureCorrectFileContent = vi.fn<typeof ensureCorrectFileContent>();
 
@@ -53,7 +53,7 @@ const mockConfigInternal = {
   getTargetDir: () => rootDir,
   getApprovalMode: vi.fn(() => ApprovalMode.DEFAULT),
   setApprovalMode: vi.fn(),
-  getGeminiClient: vi.fn(), // Initialize as a plain mock function
+  getGrokClient: vi.fn(), // Initialize as a plain mock function
   getApiKey: () => 'test-key',
   getModel: () => 'test-model',
   getSandbox: () => false,
@@ -67,8 +67,8 @@ const mockConfigInternal = {
   getUserAgent: () => 'test-agent',
   getUserMemory: () => '',
   setUserMemory: vi.fn(),
-  getGeminiMdFileCount: () => 0,
-  setGeminiMdFileCount: vi.fn(),
+  getGrokMdFileCount: () => 0,
+  setGrokMdFileCount: vi.fn(),
   getToolRegistry: () =>
     ({
       registerTool: vi.fn(),
@@ -92,15 +92,15 @@ describe('WriteFileTool', () => {
       fs.mkdirSync(rootDir, { recursive: true });
     }
 
-    // Setup GeminiClient mock
-    mockGeminiClientInstance = new (vi.mocked(GeminiClient))(
+    // Setup GrokClient mock
+    mockGrokClientInstance = new (vi.mocked(GrokClient))(
       mockConfig,
-    ) as Mocked<GeminiClient>;
-    vi.mocked(GeminiClient).mockImplementation(() => mockGeminiClientInstance);
+    ) as Mocked<GrokClient>;
+    vi.mocked(GrokClient).mockImplementation(() => mockGrokClientInstance);
 
-    // Now that mockGeminiClientInstance is initialized, set the mock implementation for getGeminiClient
-    mockConfigInternal.getGeminiClient.mockReturnValue(
-      mockGeminiClientInstance,
+    // Now that mockGrokClientInstance is initialized, set the mock implementation for getGrokClient
+    mockConfigInternal.getGrokClient.mockReturnValue(
+      mockGrokClientInstance,
     );
 
     tool = new WriteFileTool(mockConfig);
@@ -117,7 +117,7 @@ describe('WriteFileTool', () => {
         filePath: string,
         _currentContent: string,
         params: EditToolParams,
-        _client: GeminiClient,
+        _client: GrokClient,
         signal?: AbortSignal, // Make AbortSignal optional to match usage
       ): Promise<CorrectedEditResult> => {
         if (signal?.aborted) {
@@ -132,7 +132,7 @@ describe('WriteFileTool', () => {
     mockEnsureCorrectFileContent.mockImplementation(
       async (
         content: string,
-        _client: GeminiClient,
+        _client: GrokClient,
         signal?: AbortSignal,
       ): Promise<string> => {
         // Make AbortSignal optional
@@ -213,7 +213,7 @@ describe('WriteFileTool', () => {
 
       expect(mockEnsureCorrectFileContent).toHaveBeenCalledWith(
         proposedContent,
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
       expect(mockEnsureCorrectEdit).not.toHaveBeenCalled();
@@ -256,7 +256,7 @@ describe('WriteFileTool', () => {
           new_string: proposedContent,
           file_path: filePath,
         },
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
       expect(mockEnsureCorrectFileContent).not.toHaveBeenCalled();
@@ -348,7 +348,7 @@ describe('WriteFileTool', () => {
 
       expect(mockEnsureCorrectFileContent).toHaveBeenCalledWith(
         proposedContent,
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
       expect(confirmation).toEqual(
@@ -397,7 +397,7 @@ describe('WriteFileTool', () => {
           new_string: proposedContent,
           file_path: filePath,
         },
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
       expect(confirmation).toEqual(
@@ -473,7 +473,7 @@ describe('WriteFileTool', () => {
 
       expect(mockEnsureCorrectFileContent).toHaveBeenCalledWith(
         proposedContent,
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
       expect(result.llmContent).toMatch(
@@ -533,7 +533,7 @@ describe('WriteFileTool', () => {
           new_string: proposedContent,
           file_path: filePath,
         },
-        mockGeminiClientInstance,
+        mockGrokClientInstance,
         abortSignal,
       );
       expect(result.llmContent).toMatch(/Successfully overwrote file/);

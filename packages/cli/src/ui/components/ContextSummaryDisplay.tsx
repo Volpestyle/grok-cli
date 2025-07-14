@@ -7,35 +7,35 @@
 import React from 'react';
 import { Text } from 'ink';
 import { Colors } from '../colors.js';
-import { type MCPServerConfig } from '@google/gemini-cli-core';
+import { type MCPServerConfig } from 'grok-cli-core';
 
 interface ContextSummaryDisplayProps {
-  geminiMdFileCount: number;
+  grokMdFileCount: number;
   contextFileNames: string[];
   mcpServers?: Record<string, MCPServerConfig>;
   showToolDescriptions?: boolean;
 }
 
 export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
-  geminiMdFileCount,
+  grokMdFileCount,
   contextFileNames,
   mcpServers,
   showToolDescriptions,
 }) => {
   const mcpServerCount = Object.keys(mcpServers || {}).length;
 
-  if (geminiMdFileCount === 0 && mcpServerCount === 0) {
+  if (grokMdFileCount === 0 && mcpServerCount === 0) {
     return <Text> </Text>; // Render an empty space to reserve height
   }
 
-  const geminiMdText = (() => {
-    if (geminiMdFileCount === 0) {
+  const grokMdText = (() => {
+    if (grokMdFileCount === 0) {
       return '';
     }
     const allNamesTheSame = new Set(contextFileNames).size < 2;
     const name = allNamesTheSame ? contextFileNames[0] : 'context';
-    return `${geminiMdFileCount} ${name} file${
-      geminiMdFileCount > 1 ? 's' : ''
+    return `${grokMdFileCount} ${name} file${
+      grokMdFileCount > 1 ? 's' : ''
     }`;
   })();
 
@@ -45,10 +45,10 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
       : '';
 
   let summaryText = 'Using ';
-  if (geminiMdText) {
-    summaryText += geminiMdText;
+  if (grokMdText) {
+    summaryText += grokMdText;
   }
-  if (geminiMdText && mcpText) {
+  if (grokMdText && mcpText) {
     summaryText += ' and ';
   }
   if (mcpText) {

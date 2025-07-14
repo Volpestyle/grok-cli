@@ -10,14 +10,14 @@ import process from 'node:process';
 import {
   Config,
   loadServerHierarchicalMemory,
-  setGeminiMdFilename as setServerGeminiMdFilename,
-  getCurrentGeminiMdFilename,
+  setGrokMdFilename as setServerGrokMdFilename,
+  getCurrentGrokMdFilename,
   ApprovalMode,
-  DEFAULT_GEMINI_MODEL,
-  DEFAULT_GEMINI_EMBEDDING_MODEL,
+  DEFAULT_GROK_MODEL,
+  // DEFAULT_GEMINI_EMBEDDING_MODEL, // Removed - Grok doesn't support embeddings
   FileDiscoveryService,
   TelemetryTarget,
-} from '@google/gemini-cli-core';
+} from 'grok-cli-core';
 import { Settings } from './settings.js';
 
 import { Extension, filterActiveExtensions } from './extension.js';
@@ -58,16 +58,16 @@ export interface CliArgs {
 
 export async function parseArguments(): Promise<CliArgs> {
   const yargsInstance = yargs(hideBin(process.argv))
-    .scriptName('gemini')
+    .scriptName('grok')
     .usage(
       '$0 [options]',
-      'Gemini CLI - Launch an interactive CLI, use -p/--prompt for non-interactive mode',
+      'Grok CLI - Launch an interactive CLI, use -p/--prompt for non-interactive mode',
     )
     .option('model', {
       alias: 'm',
       type: 'string',
       description: `Model`,
-      default: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      default: process.env.GROK_MODEL || DEFAULT_GROK_MODEL,
     })
     .option('prompt', {
       alias: 'p',
@@ -197,7 +197,7 @@ export async function parseArguments(): Promise<CliArgs> {
 // This function is now a thin wrapper around the server's implementation.
 // It's kept in the CLI for now as App.tsx directly calls it for memory refresh.
 // TODO: Consider if App.tsx should get memory via a server call or if Config should refresh itself.
-export async function loadHierarchicalGeminiMemory(
+export async function loadHierarchicalGrokMemory(
   currentWorkingDirectory: string,
   debugMode: boolean,
   fileService: FileDiscoveryService,
@@ -237,13 +237,13 @@ export async function loadCliConfig(
 
   // Set the context filename in the server's memoryTool module BEFORE loading memory
   // TODO(b/343434939): This is a bit of a hack. The contextFileName should ideally be passed
-  // directly to the Config constructor in core, and have core handle setGeminiMdFilename.
-  // However, loadHierarchicalGeminiMemory is called *before* createServerConfig.
+  // directly to the Config constructor in core, and have core handle setGrokMdFilename.
+  // However, loadHierarchicalGrokMemory is called *before* createServerConfig.
   if (settings.contextFileName) {
-    setServerGeminiMdFilename(settings.contextFileName);
+    setServerGrokMdFilename(settings.contextFileName);
   } else {
     // Reset to default if not provided in settings.
-    setServerGeminiMdFilename(getCurrentGeminiMdFilename());
+    setServerGrokMdFilename(getCurrentGrokMdFilename());
   }
 
   const extensionContextFilePaths = activeExtensions.flatMap(
@@ -251,8 +251,8 @@ export async function loadCliConfig(
   );
 
   const fileService = new FileDiscoveryService(process.cwd());
-  // Call the (now wrapper) loadHierarchicalGeminiMemory which calls the server's version
-  const { memoryContent, fileCount } = await loadHierarchicalGeminiMemory(
+  // Call the (now wrapper) loadHierarchicalGrokMemory which calls the server's version
+  const { memoryContent, fileCount } = await loadHierarchicalGrokMemory(
     process.cwd(),
     debugMode,
     fileService,
@@ -277,7 +277,7 @@ export async function loadCliConfig(
 
   return new Config({
     sessionId,
-    embeddingModel: DEFAULT_GEMINI_EMBEDDING_MODEL,
+    embeddingModel: '', // Grok doesn't support embeddings
     sandbox: sandboxConfig,
     targetDir: process.cwd(),
     debugMode,
@@ -290,7 +290,7 @@ export async function loadCliConfig(
     mcpServerCommand: settings.mcpServerCommand,
     mcpServers,
     userMemory: memoryContent,
-    geminiMdFileCount: fileCount,
+    grokMdFileCount: fileCount,
     approvalMode: argv.yolo || false ? ApprovalMode.YOLO : ApprovalMode.DEFAULT,
     showMemoryUsage:
       argv.showMemoryUsage ||

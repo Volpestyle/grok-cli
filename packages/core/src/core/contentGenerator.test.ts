@@ -77,21 +77,21 @@ describe('createContentGeneratorConfig', () => {
     process.env = originalEnv;
   });
 
-  it('should configure for Gemini using GEMINI_API_KEY when set', async () => {
-    process.env.GEMINI_API_KEY = 'env-gemini-key';
+  it('should configure for Grok using GROK_API_KEY when set', async () => {
+    process.env.GROK_API_KEY = 'env-grok-key';
     const config = await createContentGeneratorConfig(
       undefined,
-      AuthType.USE_GEMINI,
+      AuthType.USE_GROK,
     );
-    expect(config.apiKey).toBe('env-gemini-key');
+    expect(config.apiKey).toBe('env-grok-key');
     expect(config.vertexai).toBe(false);
   });
 
-  it('should not configure for Gemini if GEMINI_API_KEY is empty', async () => {
-    process.env.GEMINI_API_KEY = '';
+  it('should not configure for Grok if GROK_API_KEY is empty', async () => {
+    process.env.GROK_API_KEY = '';
     const config = await createContentGeneratorConfig(
       undefined,
-      AuthType.USE_GEMINI,
+      AuthType.USE_GROK,
     );
     expect(config.apiKey).toBeUndefined();
     expect(config.vertexai).toBeUndefined();

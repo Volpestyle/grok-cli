@@ -12,7 +12,7 @@ import {
   Part,
   GenerateContentResponse,
 } from '@google/genai';
-import { GeminiChat } from './geminiChat.js';
+import { GrokChat } from './grokChat.js';
 import { Config } from '../config/config.js';
 import { setSimulate429 } from '../utils/testUtils.js';
 
@@ -25,8 +25,8 @@ const mockModelsModule = {
   batchEmbedContents: vi.fn(),
 } as unknown as Models;
 
-describe('GeminiChat', () => {
-  let chat: GeminiChat;
+describe('GrokChat', () => {
+  let chat: GrokChat;
   let mockConfig: Config;
   const config: GenerateContentConfig = {};
 
@@ -51,7 +51,7 @@ describe('GeminiChat', () => {
     // Disable 429 simulation for tests
     setSimulate429(false);
     // Reset history for each test by creating a new instance
-    chat = new GeminiChat(mockConfig, mockModelsModule, config, []);
+    chat = new GrokChat(mockConfig, mockModelsModule, config, []);
   });
 
   afterEach(() => {
@@ -207,7 +207,7 @@ describe('GeminiChat', () => {
       chat.recordHistory(userInput, newModelOutput); // userInput here is for the *next* turn, but history is already primed
 
       // Reset and set up a more realistic scenario for merging with existing history
-      chat = new GeminiChat(mockConfig, mockModelsModule, config, []);
+      chat = new GrokChat(mockConfig, mockModelsModule, config, []);
       const firstUserInput: Content = {
         role: 'user',
         parts: [{ text: 'First user input' }],
@@ -250,7 +250,7 @@ describe('GeminiChat', () => {
         role: 'model',
         parts: [{ text: 'Initial model answer.' }],
       };
-      chat = new GeminiChat(mockConfig, mockModelsModule, config, [
+      chat = new GrokChat(mockConfig, mockModelsModule, config, [
         initialUser,
         initialModel,
       ]);

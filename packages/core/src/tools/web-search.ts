@@ -114,10 +114,10 @@ export class WebSearchTool extends BaseTool<
         returnDisplay: validationError,
       };
     }
-    const geminiClient = this.config.getGeminiClient();
+    const grokClient = this.config.getGrokClient();
 
     try {
-      const response = await geminiClient.generateContent(
+      const response = await grokClient.generateContent(
         [{ role: 'user', parts: [{ text: params.query }] }],
         { tools: [{ googleSearch: {} }] },
         signal,

@@ -7,7 +7,7 @@
 import {
   ToolCallConfirmationDetails,
   ToolResultDisplay,
-} from '@google/gemini-cli-core';
+} from 'grok-cli-core';
 
 // Only defining the state enum needed by the UI
 export enum StreamingState {
@@ -17,7 +17,7 @@ export enum StreamingState {
 }
 
 // Copied from server/src/core/turn.ts for CLI usage
-export enum GeminiEventType {
+export enum GrokEventType {
   Content = 'content',
   ToolCallRequest = 'tool_call_request',
   // Add other event types if the UI hook needs to handle them
@@ -59,7 +59,7 @@ export interface CompressionProps {
 }
 
 export interface HistoryItemBase {
-  text?: string; // Text content for user/gemini/info/error messages
+  text?: string; // Text content for user/grok/info/error messages
 }
 
 export type HistoryItemUser = HistoryItemBase & {
@@ -67,13 +67,13 @@ export type HistoryItemUser = HistoryItemBase & {
   text: string;
 };
 
-export type HistoryItemGemini = HistoryItemBase & {
-  type: 'gemini';
+export type HistoryItemGrok = HistoryItemBase & {
+  type: 'grok';
   text: string;
 };
 
-export type HistoryItemGeminiContent = HistoryItemBase & {
-  type: 'gemini_content';
+export type HistoryItemGrokContent = HistoryItemBase & {
+  type: 'grok_content';
   text: string;
 };
 
@@ -137,8 +137,8 @@ export type HistoryItemCompression = HistoryItemBase & {
 export type HistoryItemWithoutId =
   | HistoryItemUser
   | HistoryItemUserShell
-  | HistoryItemGemini
-  | HistoryItemGeminiContent
+  | HistoryItemGrok
+  | HistoryItemGrokContent
   | HistoryItemInfo
   | HistoryItemError
   | HistoryItemAbout
@@ -161,7 +161,7 @@ export enum MessageType {
   MODEL_STATS = 'model_stats',
   TOOL_STATS = 'tool_stats',
   QUIT = 'quit',
-  GEMINI = 'gemini',
+  GROK = 'grok',
   COMPRESSION = 'compression',
 }
 

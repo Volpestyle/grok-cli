@@ -64,8 +64,8 @@ import {
   MCPServerStatus,
   getMCPDiscoveryState,
   getMCPServerStatus,
-  GeminiClient,
-} from '@google/gemini-cli-core';
+  GrokClient,
+} from 'grok-cli-core';
 import { useSessionStats } from '../contexts/SessionContext.js';
 import { LoadedSettings } from '../../config/settings.js';
 import * as ShowMemoryCommandModule from './useShowMemoryCommand.js';
@@ -88,9 +88,9 @@ vi.mock('open', () => ({
   default: vi.fn(),
 }));
 
-vi.mock('@google/gemini-cli-core', async (importOriginal) => {
+vi.mock('grok-cli', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('@google/gemini-cli-core')>();
+    await importOriginal<typeof import('grok-cli')>();
   return {
     ...actual,
     getMCPServerStatus: vi.fn(),
@@ -110,7 +110,7 @@ describe('useSlashCommandProcessor', () => {
   let mockOpenEditorDialog: ReturnType<typeof vi.fn>;
   let mockSetQuittingMessages: ReturnType<typeof vi.fn>;
   let mockTryCompressChat: ReturnType<typeof vi.fn>;
-  let mockGeminiClient: GeminiClient;
+  let mockGrokClient: GrokClient;
   let mockConfig: Config;
   let mockCorgiMode: ReturnType<typeof vi.fn>;
   const mockUseSessionStats = useSessionStats as Mock;
@@ -141,12 +141,12 @@ describe('useSlashCommandProcessor', () => {
     mockOpenEditorDialog = vi.fn();
     mockSetQuittingMessages = vi.fn();
     mockTryCompressChat = vi.fn();
-    mockGeminiClient = {
+    mockGrokClient = {
       tryCompressChat: mockTryCompressChat,
-    } as unknown as GeminiClient;
+    } as unknown as GrokClient;
     mockConfig = {
       getDebugMode: vi.fn(() => false),
-      getGeminiClient: () => mockGeminiClient,
+      getGrokClient: () => mockGrokClient,
       getSandbox: vi.fn(() => 'test-sandbox'),
       getModel: vi.fn(() => 'test-model'),
       getProjectRoot: vi.fn(() => '/test/dir'),
@@ -179,7 +179,7 @@ describe('useSlashCommandProcessor', () => {
   const getProcessorHook = (showToolDescriptions: boolean = false) => {
     const settings = {
       merged: {
-        contextFileName: 'GEMINI.md',
+        contextFileName: 'GROK.md',
       },
     } as unknown as LoadedSettings;
     return renderHook(() =>
@@ -288,7 +288,7 @@ describe('useSlashCommandProcessor', () => {
       const settings = {
         merged: {
           selectedAuthType: 'test-auth-type',
-          contextFileName: 'GEMINI.md',
+          contextFileName: 'GROK.md',
         },
       } as unknown as LoadedSettings;
 
@@ -1337,7 +1337,7 @@ describe('useSlashCommandProcessor', () => {
         hook.rerender();
       });
       expect(hook.result.current.pendingHistoryItems).toEqual([]);
-      expect(mockGeminiClient.tryCompressChat).toHaveBeenCalledWith(
+      expect(mockGrokClient.tryCompressChat).toHaveBeenCalledWith(
         'Prompt Id not set',
         true,
       );

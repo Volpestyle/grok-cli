@@ -71,7 +71,7 @@ export async function executeToolCall(
     const tool_output = tool.summarizer
       ? await tool.summarizer(
           toolResult,
-          config.getGeminiClient(),
+          config.getGrokClient(),
           effectiveAbortSignal,
         )
       : toolResult.llmContent;

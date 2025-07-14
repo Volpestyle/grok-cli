@@ -37,7 +37,7 @@ import {
   logUserPrompt,
   AuthType,
   getOauthClient,
-} from '@google/gemini-cli-core';
+} from 'grok-cli-core';
 import { validateAuthMethod } from './config/auth.js';
 import { setMaxSizedBoxDebugging } from './ui/components/shared/MaxSizedBox.js';
 
@@ -56,7 +56,7 @@ function getNodeMemoryArgs(config: Config): string[] {
     );
   }
 
-  if (process.env.GEMINI_CLI_NO_RELAUNCH) {
+  if (process.env.GROK_CLI_NO_RELAUNCH) {
     return [];
   }
 
@@ -74,7 +74,7 @@ function getNodeMemoryArgs(config: Config): string[] {
 
 async function relaunchWithAdditionalArgs(additionalArgs: string[]) {
   const nodeArgs = [...additionalArgs, ...process.argv.slice(1)];
-  const newEnv = { ...process.env, GEMINI_CLI_NO_RELAUNCH: 'true' };
+  const newEnv = { ...process.env, GROK_CLI_NO_RELAUNCH: 'true' };
 
   const child = spawn(process.execPath, nodeArgs, {
     stdio: 'inherit',
@@ -251,7 +251,7 @@ export async function main() {
 
 function setWindowTitle(title: string, settings: LoadedSettings) {
   if (!settings.merged.hideWindowTitle) {
-    const windowTitle = (process.env.CLI_TITLE || `Gemini - ${title}`).replace(
+    const windowTitle = (process.env.CLI_TITLE || `Grok - ${title}`).replace(
       // eslint-disable-next-line no-control-regex
       /[\x00-\x1F\x7F]/g,
       '',
@@ -323,16 +323,16 @@ async function validateNonInterActiveAuth(
   nonInteractiveConfig: Config,
 ) {
   // making a special case for the cli. many headless environments might not have a settings.json set
-  // so if GEMINI_API_KEY is set, we'll use that. However since the oauth things are interactive anyway, we'll
+  // so if GROK_API_KEY is set, we'll use that. However since the oauth things are interactive anyway, we'll
   // still expect that exists
-  if (!selectedAuthType && !process.env.GEMINI_API_KEY) {
+  if (!selectedAuthType && !process.env.GROK_API_KEY) {
     console.error(
-      `Please set an Auth method in your ${USER_SETTINGS_PATH} OR specify GEMINI_API_KEY env variable file before running`,
+      `Please set an Auth method in your ${USER_SETTINGS_PATH} OR specify GROK_API_KEY env variable file before running`,
     );
     process.exit(1);
   }
 
-  selectedAuthType = selectedAuthType || AuthType.USE_GEMINI;
+  selectedAuthType = selectedAuthType || AuthType.USE_GROK;
   const err = validateAuthMethod(selectedAuthType);
   if (err != null) {
     console.error(err);

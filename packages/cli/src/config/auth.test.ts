@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AuthType } from '@google/gemini-cli-core';
+import { AuthType } from 'grok-cli-core';
 import { vi } from 'vitest';
 import { validateAuthMethod } from './auth.js';
 
@@ -24,45 +24,43 @@ describe('validateAuthMethod', () => {
     process.env = originalEnv;
   });
 
-  it('should return null for LOGIN_WITH_GOOGLE', () => {
-    expect(validateAuthMethod(AuthType.LOGIN_WITH_GOOGLE)).toBeNull();
+  it('should return error for LOGIN_WITH_GOOGLE', () => {
+    expect(validateAuthMethod(AuthType.LOGIN_WITH_GOOGLE)).toBe(
+      'This authentication method is not supported in Grok CLI. Please use a Grok API key.'
+    );
   });
 
-  it('should return null for CLOUD_SHELL', () => {
-    expect(validateAuthMethod(AuthType.CLOUD_SHELL)).toBeNull();
+  it('should return error for CLOUD_SHELL', () => {
+    expect(validateAuthMethod(AuthType.CLOUD_SHELL)).toBe(
+      'This authentication method is not supported in Grok CLI. Please use a Grok API key.'
+    );
   });
 
   describe('USE_GEMINI', () => {
-    it('should return null if GEMINI_API_KEY is set', () => {
-      process.env.GEMINI_API_KEY = 'test-key';
-      expect(validateAuthMethod(AuthType.USE_GEMINI)).toBeNull();
-    });
-
-    it('should return an error message if GEMINI_API_KEY is not set', () => {
+    it('should return error for unsupported auth method', () => {
       expect(validateAuthMethod(AuthType.USE_GEMINI)).toBe(
-        'GEMINI_API_KEY environment variable not found. Add that to your environment and try again (no reload needed if using .env)!',
+        'This authentication method is not supported in Grok CLI. Please use a Grok API key.',
       );
     });
   });
 
   describe('USE_VERTEX_AI', () => {
-    it('should return null if GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION are set', () => {
-      process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
-      process.env.GOOGLE_CLOUD_LOCATION = 'test-location';
-      expect(validateAuthMethod(AuthType.USE_VERTEX_AI)).toBeNull();
-    });
-
-    it('should return null if GOOGLE_API_KEY is set', () => {
-      process.env.GOOGLE_API_KEY = 'test-api-key';
-      expect(validateAuthMethod(AuthType.USE_VERTEX_AI)).toBeNull();
-    });
-
-    it('should return an error message if no required environment variables are set', () => {
+    it('should return error for unsupported auth method', () => {
       expect(validateAuthMethod(AuthType.USE_VERTEX_AI)).toBe(
-        'When using Vertex AI, you must specify either:\n' +
-          '• GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION environment variables.\n' +
-          '• GOOGLE_API_KEY environment variable (if using express mode).\n' +
-          'Update your environment and try again (no reload needed if using .env)!',
+        'This authentication method is not supported in Grok CLI. Please use a Grok API key.',
+      );
+    });
+  });
+
+  describe('USE_GROK', () => {
+    it('should return null if GROK_API_KEY is set', () => {
+      process.env.GROK_API_KEY = 'test-key';
+      expect(validateAuthMethod(AuthType.USE_GROK)).toBeNull();
+    });
+
+    it('should return an error message if GROK_API_KEY is not set', () => {
+      expect(validateAuthMethod(AuthType.USE_GROK)).toBe(
+        'GROK_API_KEY environment variable not found. Add that to your environment and try again (no reload needed if using .env)!',
       );
     });
   });

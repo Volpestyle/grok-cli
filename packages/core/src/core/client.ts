@@ -17,8 +17,8 @@ import {
 import { getFolderStructure } from '../utils/getFolderStructure.js';
 import {
   Turn,
-  ServerGeminiStreamEvent,
-  GeminiEventType,
+  ServerGrokStreamEvent,
+  GrokEventType,
   ChatCompressionInfo,
 } from './turn.js';
 import { Config } from '../config/config.js';
@@ -27,7 +27,7 @@ import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import { getResponseText } from '../utils/generateContentResponseUtilities.js';
 import { checkNextSpeaker } from '../utils/nextSpeakerChecker.js';
 import { reportError } from '../utils/errorReporting.js';
-import { GeminiChat } from './geminiChat.js';
+import { GrokChat } from './grokChat.js';
 import { retryWithBackoff } from '../utils/retry.js';
 import { getErrorMessage } from '../utils/errors.js';
 import { tokenLimit } from './tokenLimits.js';
@@ -38,10 +38,10 @@ import {
   createContentGenerator,
 } from './contentGenerator.js';
 import { ProxyAgent, setGlobalDispatcher } from 'undici';
-import { DEFAULT_GEMINI_FLASH_MODEL } from '../config/models.js';
+import { DEFAULT_GROK_FLASH_MODEL } from '../config/models.js';
 
 function isThinkingSupported(model: string) {
-  if (model.startsWith('gemini-2.5')) return true;
+  if (model.startsWith('grok-4')) return true;
   return false;
 }
 
@@ -78,8 +78,8 @@ export function findIndexAfterFraction(
   return contentLengths.length;
 }
 
-export class GeminiClient {
-  private chat?: GeminiChat;
+export class GrokClient {
+  private chat?: GrokChat;
   private contentGenerator?: ContentGenerator;
   private embeddingModel: string;
   private generateContentConfig: GenerateContentConfig = {
@@ -127,7 +127,7 @@ export class GeminiClient {
     this.getChat().addHistory(content);
   }
 
-  getChat(): GeminiChat {
+  getChat(): GrokChat {
     if (!this.chat) {
       throw new Error('Chat not initialized');
     }
@@ -163,7 +163,7 @@ export class GeminiClient {
       fileService: this.config.getFileService(),
     });
     const context = `
-  This is the Gemini CLI. We are setting up the context for our chat.
+  This is the Grok CLI. We are setting up the context for our chat.
   Today's date is ${today}.
   My operating system is: ${platform}
   I'm currently working in the directory: ${cwd}
@@ -214,7 +214,7 @@ export class GeminiClient {
     return initialParts;
   }
 
-  private async startChat(extraHistory?: Content[]): Promise<GeminiChat> {
+  private async startChat(extraHistory?: Content[]): Promise<GrokChat> {
     const envParts = await this.getEnvironment();
     const toolRegistry = await this.config.getToolRegistry();
     const toolDeclarations = toolRegistry.getFunctionDeclarations();
@@ -243,7 +243,7 @@ export class GeminiClient {
             },
           }
         : this.generateContentConfig;
-      return new GeminiChat(
+      return new GrokChat(
         this.config,
         this.getContentGenerator(),
         {
@@ -256,7 +256,7 @@ export class GeminiClient {
     } catch (error) {
       await reportError(
         error,
-        'Error initializing Gemini chat session.',
+        'Error initializing Grok chat session.',
         history,
         'startChat',
       );
@@ -270,13 +270,13 @@ export class GeminiClient {
     prompt_id: string,
     turns: number = this.MAX_TURNS,
     originalModel?: string,
-  ): AsyncGenerator<ServerGeminiStreamEvent, Turn> {
+  ): AsyncGenerator<ServerGrokStreamEvent, Turn> {
     this.sessionTurnCount++;
     if (
       this.config.getMaxSessionTurns() > 0 &&
       this.sessionTurnCount > this.config.getMaxSessionTurns()
     ) {
-      yield { type: GeminiEventType.MaxSessionTurns };
+      yield { type: GrokEventType.MaxSessionTurns };
       return new Turn(this.getChat(), prompt_id);
     }
     // Ensure turns never exceeds MAX_TURNS to prevent infinite loops
@@ -291,7 +291,7 @@ export class GeminiClient {
     const compressed = await this.tryCompressChat(prompt_id);
 
     if (compressed) {
-      yield { type: GeminiEventType.ChatCompressed, value: compressed };
+      yield { type: GrokEventType.ChatCompressed, value: compressed };
     }
     const turn = new Turn(this.getChat(), prompt_id);
     const resultStream = turn.run(request, signal);
@@ -337,7 +337,7 @@ export class GeminiClient {
   ): Promise<Record<string, unknown>> {
     // Use current model from config instead of hardcoded Flash model
     const modelToUse =
-      model || this.config.getModel() || DEFAULT_GEMINI_FLASH_MODEL;
+      model || this.config.getModel() || DEFAULT_GROK_FLASH_MODEL;
     try {
       const userMemory = this.config.getUserMemory();
       const systemInstruction = getCoreSystemPrompt(userMemory);
@@ -611,7 +611,7 @@ export class GeminiClient {
     }
 
     const currentModel = this.config.getModel();
-    const fallbackModel = DEFAULT_GEMINI_FLASH_MODEL;
+    const fallbackModel = DEFAULT_GROK_FLASH_MODEL;
 
     // Don't fallback if already using Flash model
     if (currentModel === fallbackModel) {

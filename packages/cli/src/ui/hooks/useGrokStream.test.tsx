@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useGeminiStream, mergePartListUnions } from './useGeminiStream.js';
+import { mergePartListUnions } from './useGrokStream.js';
 import { useInput } from 'ink';
 import {
   useReactToolScheduler,
@@ -16,7 +16,7 @@ import {
   TrackedExecutingToolCall,
   TrackedCancelledToolCall,
 } from './useReactToolScheduler.js';
-import { Config, EditorType, AuthType } from '@google/gemini-cli-core';
+import { Config, EditorType, AuthType } from 'grok-cli-core';
 import { Part, PartListUnion } from '@google/genai';
 import { UseHistoryManagerReturn } from './useHistoryManager.js';
 import {
@@ -34,7 +34,7 @@ const mockSendMessageStream = vi
   .mockReturnValue((async function* () {})());
 const mockStartChat = vi.fn();
 
-const MockedGeminiClientClass = vi.hoisted(() =>
+const MockedGrokClientClass = vi.hoisted(() =>
   vi.fn().mockImplementation(function (this: any, _config: any) {
     // _config
     this.startChat = mockStartChat;
@@ -47,12 +47,12 @@ const MockedUserPromptEvent = vi.hoisted(() =>
   vi.fn().mockImplementation(() => {}),
 );
 
-vi.mock('@google/gemini-cli-core', async (importOriginal) => {
+vi.mock('grok-cli', async (importOriginal) => {
   const actualCoreModule = (await importOriginal()) as any;
   return {
     ...actualCoreModule,
     GitService: vi.fn(),
-    GeminiClient: MockedGeminiClientClass,
+    GrokClient: MockedGrokClientClass,
     UserPromptEvent: MockedUserPromptEvent,
   };
 });
@@ -265,11 +265,11 @@ describe('useGeminiStream', () => {
 
     mockAddItem = vi.fn();
     mockSetShowHelp = vi.fn();
-    // Define the mock for getGeminiClient
-    const mockGetGeminiClient = vi.fn().mockImplementation(() => {
-      // MockedGeminiClientClass is defined in the module scope by the previous change.
+    // Define the mock for getGrokClient
+    const mockGetGrokClient = vi.fn().mockImplementation(() => {
+      // MockedGrokClientClass is defined in the module scope by the previous change.
       // It will use the mockStartChat and mockSendMessageStream that are managed within beforeEach.
-      const clientInstance = new MockedGeminiClientClass(mockConfig);
+      const clientInstance = new MockedGrokClientClass(mockConfig);
       return clientInstance;
     });
 
@@ -295,7 +295,7 @@ describe('useGeminiStream', () => {
       mcpServers: undefined,
       userAgent: 'test-agent',
       userMemory: '',
-      geminiMdFileCount: 0,
+      grokMdFileCount: 0,
       alwaysSkipModificationConfirmation: false,
       vertexai: false,
       showMemoryUsage: false,
@@ -305,7 +305,7 @@ describe('useGeminiStream', () => {
       ),
       getProjectRoot: vi.fn(() => '/test/dir'),
       getCheckpointingEnabled: vi.fn(() => false),
-      getGeminiClient: mockGetGeminiClient,
+      getGrokClient: mockGetGrokClient,
       getUsageStatisticsEnabled: () => true,
       getDebugMode: () => false,
       addHistory: vi.fn(),
@@ -334,8 +334,8 @@ describe('useGeminiStream', () => {
       mockMarkToolsAsSubmitted,
     ]);
 
-    // Reset mocks for GeminiClient instance methods (startChat and sendMessageStream)
-    // The GeminiClient constructor itself is mocked at the module level.
+    // Reset mocks for GrokClient instance methods (startChat and sendMessageStream)
+    // The GrokClient constructor itself is mocked at the module level.
     mockStartChat.mockClear().mockResolvedValue({
       sendMessageStream: mockSendMessageStream,
     } as unknown as any); // GeminiChat -> any
@@ -347,7 +347,7 @@ describe('useGeminiStream', () => {
   const mockLoadedSettings: LoadedSettings = {
     merged: { preferredEditor: 'vscode' },
     user: { path: '/user/settings.json', settings: {} },
-    workspace: { path: '/workspace/.gemini/settings.json', settings: {} },
+    workspace: { path: '/workspace/.grok/settings.json', settings: {} },
     errors: [],
     forScope: vi.fn(),
     setValue: vi.fn(),
@@ -355,7 +355,7 @@ describe('useGeminiStream', () => {
 
   const renderTestHook = (
     initialToolCalls: TrackedToolCall[] = [],
-    geminiClient?: any,
+    grokClient?: any,
   ) => {
     let currentToolCalls = initialToolCalls;
     const setToolCalls = (newToolCalls: TrackedToolCall[]) => {
@@ -369,7 +369,7 @@ describe('useGeminiStream', () => {
       mockMarkToolsAsSubmitted,
     ]);
 
-    const client = geminiClient || mockConfig.getGeminiClient();
+    const client = grokClient || mockConfig.getGrokClient();
 
     const { result, rerender } = renderHook(
       (props: {
@@ -533,7 +533,7 @@ describe('useGeminiStream', () => {
 
     renderHook(() =>
       useGeminiStream(
-        new MockedGeminiClientClass(mockConfig),
+        new MockedGrokClientClass(mockConfig),
         [],
         mockAddItem,
         mockSetShowHelp,
@@ -587,7 +587,7 @@ describe('useGeminiStream', () => {
         responseSubmittedToGemini: false,
       } as TrackedCancelledToolCall,
     ];
-    const client = new MockedGeminiClientClass(mockConfig);
+    const client = new MockedGrokClientClass(mockConfig);
 
     // Capture the onComplete callback
     let capturedOnComplete:
@@ -685,7 +685,7 @@ describe('useGeminiStream', () => {
       responseSubmittedToGemini: false,
     };
     const allCancelledTools = [cancelledToolCall1, cancelledToolCall2];
-    const client = new MockedGeminiClientClass(mockConfig);
+    const client = new MockedGrokClientClass(mockConfig);
 
     let capturedOnComplete:
       | ((completedTools: TrackedToolCall[]) => Promise<void>)
@@ -801,7 +801,7 @@ describe('useGeminiStream', () => {
 
     const { result, rerender } = renderHook(() =>
       useGeminiStream(
-        new MockedGeminiClientClass(mockConfig),
+        new MockedGrokClientClass(mockConfig),
         [],
         mockAddItem,
         mockSetShowHelp,
@@ -1093,7 +1093,7 @@ describe('useGeminiStream', () => {
 
       renderHook(() =>
         useGeminiStream(
-          new MockedGeminiClientClass(mockConfig),
+          new MockedGrokClientClass(mockConfig),
           [],
           mockAddItem,
           mockSetShowHelp,
@@ -1145,7 +1145,7 @@ describe('useGeminiStream', () => {
 
       const { result } = renderHook(() =>
         useGeminiStream(
-          new MockedGeminiClientClass(testConfig),
+          new MockedGrokClientClass(testConfig),
           [],
           mockAddItem,
           mockSetShowHelp,

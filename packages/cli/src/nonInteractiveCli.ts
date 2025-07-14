@@ -11,7 +11,7 @@ import {
   ToolRegistry,
   shutdownTelemetry,
   isTelemetrySdkInitialized,
-} from '@google/gemini-cli-core';
+} from 'grok-cli-core';
 import {
   Content,
   Part,
@@ -57,10 +57,10 @@ export async function runNonInteractive(
     }
   });
 
-  const geminiClient = config.getGeminiClient();
+  const grokClient = config.getGrokClient();
   const toolRegistry: ToolRegistry = await config.getToolRegistry();
 
-  const chat = await geminiClient.getChat();
+  const chat = await grokClient.getChat();
   const abortController = new AbortController();
   let currentMessages: Content[] = [{ role: 'user', parts: [{ text: input }] }];
   let turnCount = 0;

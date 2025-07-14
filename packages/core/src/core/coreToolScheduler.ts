@@ -663,7 +663,7 @@ export class CoreToolScheduler {
                 const toolSignal = new AbortController();
                 summary = await scheduledCall.tool.summarizer(
                   toolResult,
-                  this.config.getGeminiClient(),
+                  this.config.getGrokClient(),
                   toolSignal.signal,
                 );
                 if (toolSignal.signal.aborted) {

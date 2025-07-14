@@ -18,7 +18,7 @@ import {
   MCPServerStatus,
   getMCPDiscoveryState,
   getMCPServerStatus,
-} from '@google/gemini-cli-core';
+} from 'grok-cli-core';
 import { useSessionStats } from '../contexts/SessionContext.js';
 import {
   Message,
@@ -223,7 +223,7 @@ export const useSlashCommandProcessor = (
       // `/help` and `/clear` have been migrated and REMOVED from this list.
       {
         name: 'docs',
-        description: 'open full Gemini CLI documentation in your browser',
+        description: 'open full Grok CLI documentation in your browser',
         action: async (_mainCommand, _subCommand, _args) => {
           const docsUrl = 'https://goo.gle/gemini-cli-docs';
           if (process.env.SANDBOX && process.env.SANDBOX !== 'sandbox-exec') {
@@ -516,7 +516,7 @@ export const useSlashCommandProcessor = (
       },
       {
         name: 'tools',
-        description: 'list available Gemini CLI tools',
+        description: 'list available Grok CLI tools',
         action: async (_mainCommand, _subCommand, _args) => {
           // Check if the _subCommand includes a specific flag to control description visibility
           let useShowDescriptions = showToolDescriptions;
@@ -547,7 +547,7 @@ export const useSlashCommandProcessor = (
           // Filter out MCP tools by checking if they have a serverName property
           const geminiTools = tools.filter((tool) => !('serverName' in tool));
 
-          let message = 'Available Gemini CLI tools:\n\n';
+          let message = 'Available Grok CLI tools:\n\n';
 
           if (geminiTools.length > 0) {
             geminiTools.forEach((tool) => {
@@ -693,7 +693,7 @@ export const useSlashCommandProcessor = (
           const tag = (args || '').trim();
           const logger = new Logger(config?.getSessionId() || '');
           await logger.initialize();
-          const chat = await config?.getGeminiClient()?.getChat();
+          const chat = await config?.getGrokClient()?.getChat();
           if (!chat) {
             addMessage({
               type: MessageType.ERROR,
@@ -762,7 +762,7 @@ export const useSlashCommandProcessor = (
               chat.clearHistory();
               const rolemap: { [key: string]: MessageType } = {
                 user: MessageType.USER,
-                model: MessageType.GEMINI,
+                model: MessageType.GROK,
               };
               let hasSystemPrompt = false;
               let i = 0;
@@ -789,7 +789,7 @@ export const useSlashCommandProcessor = (
                   addItem(
                     {
                       type:
-                        (item.role && rolemap[item.role]) || MessageType.GEMINI,
+                        (item.role && rolemap[item.role]) || MessageType.GROK,
                       text,
                     } as HistoryItemWithoutId,
                     i,
@@ -872,7 +872,7 @@ export const useSlashCommandProcessor = (
           });
           try {
             const compressed = await config!
-              .getGeminiClient()!
+              .getGrokClient()!
               // TODO: Set Prompt id for CompressChat from SlashCommandProcessor.
               .tryCompressChat('Prompt Id not set', true);
             if (compressed) {
@@ -933,7 +933,7 @@ export const useSlashCommandProcessor = (
           if (!checkpointDir) {
             addMessage({
               type: MessageType.ERROR,
-              content: 'Could not determine the .gemini directory path.',
+              content: 'Could not determine the .grok directory path.',
               timestamp: new Date(),
             });
             return;
@@ -994,7 +994,7 @@ export const useSlashCommandProcessor = (
 
             if (toolCallData.clientHistory) {
               await config
-                ?.getGeminiClient()
+                ?.getGrokClient()
                 ?.setHistory(toolCallData.clientHistory);
             }
 

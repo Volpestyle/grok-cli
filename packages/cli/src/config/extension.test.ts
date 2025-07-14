@@ -29,10 +29,10 @@ describe('loadExtensions', () => {
 
   beforeEach(() => {
     tempWorkspaceDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'gemini-cli-test-workspace-'),
+      path.join(os.tmpdir(), 'grok-cli-test-workspace-'),
     );
     tempHomeDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'gemini-cli-test-home-'),
+      path.join(os.tmpdir(), 'grok-cli-test-home-'),
     );
     vi.mocked(os.homedir).mockReturnValue(tempHomeDir);
   });
@@ -42,7 +42,7 @@ describe('loadExtensions', () => {
     fs.rmSync(tempHomeDir, { recursive: true, force: true });
   });
 
-  it('should load context file path when GEMINI.md is present', () => {
+  it('should load context file path when GROK.md is present', () => {
     const workspaceExtensionsDir = path.join(
       tempWorkspaceDir,
       EXTENSIONS_DIRECTORY_NAME,
@@ -57,7 +57,7 @@ describe('loadExtensions', () => {
     const ext1 = extensions.find((e) => e.config.name === 'ext1');
     const ext2 = extensions.find((e) => e.config.name === 'ext2');
     expect(ext1?.contextFiles).toEqual([
-      path.join(workspaceExtensionsDir, 'ext1', 'GEMINI.md'),
+      path.join(workspaceExtensionsDir, 'ext1', 'GROK.md'),
     ]);
     expect(ext2?.contextFiles).toEqual([]);
   });
@@ -142,7 +142,7 @@ function createExtension(
   );
 
   if (addContextFile) {
-    fs.writeFileSync(path.join(extDir, 'GEMINI.md'), 'context');
+    fs.writeFileSync(path.join(extDir, 'GROK.md'), 'context');
   }
 
   if (contextFileName) {
